@@ -138,26 +138,66 @@ function tutorial_civicrm_entityTypes(&$entityTypes) {
  * Implements hook_civicrm_buildForm().
  */
 function tutorial_civicrm_buildForm($formName, &$form) {
-  _civitutorial_load($form->urlPath);
+  _civitutorial_load(implode('/', $form->urlPath));
 }
 
 /**
  * Implements hook_civicrm_pageRun().
- *
- * @param CRM_Core_Page $page
  */
 function tutorial_civicrm_pageRun(&$page) {
-  _civitutorial_load($page->urlPath);
+  _civitutorial_load(implode('/', $page->urlPath));
 }
 
+/**
+ * @return array|mixed
+ */
+function _civitutorial_get_files() {
+  $files = Civi::cache('community_messages')->get('tutorials');
+  if ($files === NULL) {
+    $files = [];
+    $paths = array_unique(explode(PATH_SEPARATOR, get_include_path()));
+    $paths[] = Civi::paths()->getPath('[civicrm.files]/.');
+    foreach ($paths as $path) {
+      $dir = \CRM_Utils_File::addTrailingSlash($path) . 'crm-tutorials';
+      if (is_dir($dir)) {
+        foreach (glob("$dir/*.json") as $file) {
+          $matches = [];
+          preg_match('/([-a-z_A-Z0-9]*).json/', $file, $matches);
+          $id = $matches[1];
+          $files[$path] = json_decode(file_get_contents($file), TRUE);
+          $files[$path]['id'] = $id;
+        }
+      }
+    }
+    Civi::cache('community_messages')->set('tutorials', $files, (60 * 60 * 24 * 30));
+  }
+  return $files;
+}
+
+/**
+ * @param $currentPath
+ * @param $tutorialPath
+ * @return bool
+ */
+function _civitutorial_match_url($currentPath, $tutorialPath) {
+  $url = parse_url($tutorialPath);
+  return ($currentPath == $url['path']);
+}
+
+/**
+ * @param $urlPath
+ */
 function _civitutorial_load($urlPath) {
-  if ($urlPath == ['civicrm', 'contact', 'view']) {
-    CRM_Core_Resources::singleton()
-      ->addStyleFile('org.civicrm.tutorial', 'vendor/hopscotch/css/hopscotch.min.css')
-      ->addScriptFile('org.civicrm.tutorial', 'vendor/hopscotch/js/hopscotch.min.js', 0, 'html-header')
-      ->addScriptFile('org.civicrm.tutorial', 'js/tutorial.js')
-      ->addVars('tutorial', [
-        'url' => CRM_Extension_System::singleton()->getMapper()->keyToUrl('org.civicrm.tutorial') . '/tutorials/contact-summary.json'
-      ]);
+  if (!CRM_Core_Resources::isAjaxMode()) {
+    $tutorials = _civitutorial_get_files();
+    foreach ($tutorials as $path => $tutorial) {
+      if (_civitutorial_match_url($urlPath, $tutorial['url'])) {
+        CRM_Core_Resources::singleton()
+          ->addStyleFile('org.civicrm.tutorial', 'vendor/hopscotch/css/hopscotch.min.css')
+          ->addScriptFile('org.civicrm.tutorial', 'vendor/hopscotch/js/hopscotch.min.js', 0, 'html-header')
+          ->addScriptFile('org.civicrm.tutorial', 'js/tutorial.js')
+          ->addVars('tutorial', $tutorial);
+      }
+    }
   }
 }

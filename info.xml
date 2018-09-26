@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <extension key="org.civicrm.tutorial" type="module">
   <file>tutorial</file>
-  <name>FIXME</name>
-  <description>FIXME</description>
+  <name>Civi Tutorials</name>
+  <description>Provides walkthrough tutorials for using CiviCRM screens.</description>
   <license>AGPL-3.0</license>
   <maintainer>
     <author>Coleman Watts</author>
