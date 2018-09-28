@@ -152,23 +152,26 @@ function tutorial_civicrm_pageRun(&$page) {
  * @return array|mixed
  */
 function _civitutorial_get_files() {
-  $files = Civi::cache('community_messages')->get('tutorials');
+  $files = NULL;//Civi::cache('community_messages')->get('tutorials');
   if ($files === NULL) {
-    $files = [];
-    $paths = array_unique(explode(PATH_SEPARATOR, get_include_path()));
-    $paths[] = Civi::paths()->getPath('[civicrm.files]/.');
-    foreach ($paths as $path) {
-      $dir = \CRM_Utils_File::addTrailingSlash($path) . 'crm-tutorials';
+    $files = $paths = [];
+    $directories = array_unique(explode(PATH_SEPARATOR, get_include_path()));
+    // Files in this directory override others, as this is where user-configured files go.
+    $directories[] = Civi::paths()->getPath('[civicrm.files]/.');
+    foreach ($directories as $directory) {
+      $dir = \CRM_Utils_File::addTrailingSlash($directory) . 'crm-tutorials';
       if (is_dir($dir)) {
         foreach (glob("$dir/*.json") as $file) {
           $matches = [];
           preg_match('/([-a-z_A-Z0-9]*).json/', $file, $matches);
           $id = $matches[1];
-          $files[$file] = json_decode(file_get_contents($file), TRUE);
-          $files[$file]['id'] = $id;
+          $paths[$id] = $file;
+          $files[$id] = json_decode(file_get_contents($file), TRUE);
+          $files[$id]['id'] = $id;
         }
       }
     }
+    $files = array_combine($paths, $files);
     Civi::cache('community_messages')->set('tutorials', $files, (60 * 60 * 24 * 30));
   }
   return $files;
@@ -184,6 +187,12 @@ function _civitutorial_match_url($currentPath, $tutorialPath) {
   return ($currentPath == $url['path']);
 }
 
+/**
+ * @param $tutorial
+ * @param int $cid
+ * @return bool
+ * @throws \CiviCRM_API3_Exception
+ */
 function _civitutorial_match_group($tutorial, $cid = NULL) {
   if (empty($tutorial['groups'])) {
     return TRUE;
@@ -201,7 +210,7 @@ function _civitutorial_match_group($tutorial, $cid = NULL) {
   ]);
   $groups = array_column($groups['values'], 'name');
 
-  return array_intersect($groups, $tutorial['groups']);
+  return !!array_intersect($groups, $tutorial['groups']);
 }
 
 /**
