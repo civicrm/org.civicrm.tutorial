@@ -1,5 +1,8 @@
 (function($, _, ts) {
   var tour,
+    targetField,
+    ESC_KEY = 27,
+    ENTER_KEY = 13,
     saved = true,
     stepDefaults = {
     target: '',
@@ -90,6 +93,40 @@
     CRM.api3('Tutorial', 'create', tour, true);
   }
 
+  function selectTarget(e) {
+    targetField = $(e.target);
+    e.stopImmediatePropagation();
+    $('body')
+      .addClass('civitutorial-select-target')
+      .on('click.tutorialAdmin', onTargetClick)
+      .on('keydown.tutorialAdmin', doneSelecting);
+  }
+
+  function doneSelecting() {
+    $('body')
+      .removeClass('civitutorial-select-target')
+      .off('.tutorialAdmin');
+  }
+
+  function onTargetClick(e) {
+    var $target = $(e.target);
+    if ($target.closest('#civitutorial-admin').length < 1) {
+      e.preventDefault();
+      pickBestTarget($target);
+    }
+    doneSelecting();
+  }
+
+  function pickBestTarget($target) {
+    if ($target.attr('id')) {
+      targetField.val('#' + $target.attr('id'));
+    } else if ($target.attr('class') && !$target.is('span, strong, i, b, em')) {
+      targetField.val('.' + $target.attr('class').replace(/ /g, '.'));
+    } else {
+      pickBestTarget($target.parent());
+    }
+  }
+
   function updateFieldVal($field, values) {
     var val,
       fieldName = $field.attr('name');
@@ -127,12 +164,12 @@
       '<h4>' + ts('Edit Tutorial') + '</h4>' +
       '<div id="civitutorial-admin-top">' +
       '  <div>' +
-      '    <label>' + ts('Name') + '</label>' +
+      '    <label>' + ts('Name') + ' <span class="crm-marker">*</span></label>' +
       '    <input id="civitutorial-field-id" name="id" class="crm-form-text twenty" value="<%= id %>" required />' +
       '    <div class="description">' + ts('Spaces and punctuation not allowed.') + '</div>' +
       '  </div>' +
       '  <div>' +
-      '    <label>' + ts('Page') + '</label>' +
+      '    <label>' + ts('Page') + ' <span class="crm-marker">*</span></label>' +
       '    <input id="civitutorial-field-url" name="url" class="crm-form-text twenty" value="<%= url %>" required />' +
       '    <div class="description">' + ts('Relative url of page.') + '</div>' +
       '  </div>' +
@@ -160,12 +197,12 @@
       '    <textarea name="content" class="crm-form-textarea"><%= content %></textarea>' +
       '  </div>' +
       '  <div>' +
-      '    <label>' + ts('Element') + '</label>' +
+      '    <label>' + ts('Element') + ' <span class="crm-marker">*</span></label>' +
       '    <input name="target" class="crm-form-text twenty" value="<%= target %>" required />' +
       '    <div class="description">' + ts('Css selector of page element.') + '</div>' +
       '  </div>' +
       '  <div>' +
-      '    <label>' + ts('Placement') + '</label>' +
+      '    <label>' + ts('Placement') + ' <span class="crm-marker">*</span></label>' +
       '    <select name="placement" class="crm-form-select" required >' +
       '      <option value="top" <% if (placement == "top") { %> selected="selected" <% } %>>' + ts('Top') + '</option>' +
       '      <option value="bottom" <% if (placement == "bottom") { %> selected="selected" <% } %>>' + ts('Bottom') + '</option>' +
@@ -183,6 +220,7 @@
   }
 
   function editTour() {
+    hopscotch.endTour();
     setDefaults();
     $('body').append('<form id="civitutorial-admin" class="crm-container"></form>');
     // Slight delay so css animation works
@@ -200,18 +238,19 @@
     });
     _.each(tour.steps, renderStep);
     $('#civitutorial-steps')
-      .on('change', ':input[name], [contenteditable]', function() {
+      .on('change input', ':input[name], [contenteditable]', function() {
         var parentClass = $(this).attr('name') == 'title' ? '.civitutorial-step-title' : '.civitutorial-step-content',
           index = $(this).prevAll(parentClass).length;
         updateFieldVal($(this), tour.steps[index]);
       })
       .on('change', '[name=icon]', updateIcon)
       .on('keydown', '[contenteditable]', function(e) {
-        if (e.which === 13) {
+        if (e.which === ENTER_KEY) {
           e.preventDefault();
           $(this).blur();
         }
       })
+      .on('click', '[name=target]', selectTarget)
       .on('click', '.civitutorial-step-remove', deleteStep)
       .accordion({icons: false}).find('h5').off('keydown');
   }

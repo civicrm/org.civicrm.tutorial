@@ -65,11 +65,11 @@ body.civitutorial-admin-open #civitutorial-admin {
 
 #civitutorial-admin-top label {
   display: inline-block;
-  width: 40px;
+  width: 45px;
 }
 
 #civitutorial-admin-top .description {
-  margin-left: 45px;
+  margin-left: 50px;
 }
 
 #civitutorial-admin .ui-widget-content,
@@ -129,4 +129,11 @@ body.civitutorial-admin-open #civitutorial-admin {
 }
 #civitutorial-steps select {
   font-size: 11px;
+}
+
+body.civitutorial-select-target {
+  border: 5px solid red;
+}
+body.civitutorial-select-target * {
+  cursor: crosshair !important;
 }
