@@ -164,8 +164,8 @@ function _civitutorial_get_files() {
           $matches = [];
           preg_match('/([-a-z_A-Z0-9]*).json/', $file, $matches);
           $id = $matches[1];
-          $files[$path] = json_decode(file_get_contents($file), TRUE);
-          $files[$path]['id'] = $id;
+          $files[$file] = json_decode(file_get_contents($file), TRUE);
+          $files[$file]['id'] = $id;
         }
       }
     }
@@ -184,20 +184,71 @@ function _civitutorial_match_url($currentPath, $tutorialPath) {
   return ($currentPath == $url['path']);
 }
 
+function _civitutorial_match_group($tutorial, $cid = NULL) {
+  if (empty($tutorial['groups'])) {
+    return TRUE;
+  }
+  $contact = civicrm_api3('Contact', 'getsingle', [
+    'id' => $cid ?: 'user_contact_id',
+    'return' => ["group"],
+  ]);
+  if (empty($contact['groups'])) {
+    return FALSE;
+  }
+  $groups = civicrm_api3('Group', 'get', [
+    'return' => ["name"],
+    'id' => ['IN' => explode(',', $contact['groups'])],
+  ]);
+  $groups = array_column($groups['values'], 'name');
+
+  return array_intersect($groups, $tutorial['groups']);
+}
+
 /**
  * @param $urlPath
  */
 function _civitutorial_load($urlPath) {
-  if (!CRM_Core_Resources::isAjaxMode()) {
+  // Because this hook gets called twice sometimes
+  static $ranAlready = FALSE;
+  $cid = CRM_Core_Session::getLoggedInContactID();
+  if ($cid && !$ranAlready && !CRM_Core_Resources::isAjaxMode() && CRM_Core_Permission::check('access CiviCRM')) {
+    $ranAlready = TRUE;
+    $resources = CRM_Core_Resources::singleton()
+      ->addStyleFile('org.civicrm.tutorial', 'vendor/hopscotch/css/hopscotch.min.css')
+      ->addScriptFile('org.civicrm.tutorial', 'vendor/hopscotch/js/hopscotch.min.js', 0, 'html-header')
+      ->addScriptFile('org.civicrm.tutorial', 'js/tutorial.js');
     $tutorials = _civitutorial_get_files();
     foreach ($tutorials as $path => $tutorial) {
-      if (_civitutorial_match_url($urlPath, $tutorial['url'])) {
-        CRM_Core_Resources::singleton()
-          ->addStyleFile('org.civicrm.tutorial', 'vendor/hopscotch/css/hopscotch.min.css')
-          ->addScriptFile('org.civicrm.tutorial', 'vendor/hopscotch/js/hopscotch.min.js', 0, 'html-header')
-          ->addScriptFile('org.civicrm.tutorial', 'js/tutorial.js')
-          ->addVars('tutorial', $tutorial);
+      if (_civitutorial_match_url($urlPath, $tutorial['url']) && _civitutorial_match_group($tutorial)) {
+        // Check if user has viewed this tutorial already
+        /** @var Civi\Core\SettingsBag $settings */
+        $settings = Civi::service('settings_manager')->getBagByContact(NULL, $cid);
+        $views = (array) $settings->get('tutorials');
+        $tutorial['viewed'] = !empty($views[$tutorial['id']]);
+        $resources->addVars('tutorial', $tutorial);
+        // Mark this tutorial as viewed
+        if (empty($views[$tutorial['id']])) {
+          $views[$tutorial['id']] = date('Y-m-d H:i:s');
+          $settings->set('tutorials', $views);
+        }
       }
     }
   }
+}
+
+/**
+ * Implements hook_civicrm_navigationMenu().
+ *
+ * @link http://wiki.civicrm.org/confluence/display/CRMDOC/hook_civicrm_navigationMenu
+ */
+function tutorial_civicrm_navigationMenu(&$menu) {
+  _tutorial_civix_insert_navigation_menu($menu, 'Support', [
+    'label' => ts('Take a tour of this screen'),
+    'url' => '#tutorial-start',
+    'class' => 'crm-tutorial-start',
+    'name' => 'tutorial',
+    'permission' => 'access CiviCRM',
+    'title' => ts('Get an interactive walkthrough of this screen'),
+    'icon' => 'crm-i fa-play',
+  ]);
 }
