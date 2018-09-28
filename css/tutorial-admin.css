@@ -1,0 +1,132 @@
+#civitutorial-admin {
+  height: 100%;
+  width: 350px;
+  background: #505050;
+  color: white;
+  position: fixed;
+  right: -350px;
+  top: 0;
+  padding: 40px 10px 20px 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+body.civitutorial-admin-open {
+  margin-right: 350px;
+  transition: 0.5s;
+}
+
+body.civitutorial-admin-open #civitutorial-admin {
+  right: 0;
+  transition: 0.5s;
+}
+
+#civitutorial-admin button {
+  border: 0 none;
+  background: #80b33d;
+  padding: 3px 6px;
+  border-radius: 2px;
+  color: white;
+  cursor: pointer;
+}
+#civitutorial-admin button[disabled] {
+  cursor: default;
+  background: #557d31;
+}
+
+#civitutorial-admin #civitutorial-admin-close {
+  position: absolute;
+  top: 40px;
+  right: 10px;
+  background: #9a373c;
+}
+#civitutorial-admin-save {
+  position: absolute;
+  top: 40px;
+  right: 50px;
+}
+#civitutorial-admin #civitutorial-add-step {
+  padding: 5px 9px;
+}
+
+#civitutorial-admin h4 {
+  margin: 5px 0 10px;
+}
+
+#civitutorial-admin .description {
+  color: lightgrey;
+}
+
+#civitutorial-admin label {
+  font-size: 13px;
+}
+
+#civitutorial-admin-top label {
+  display: inline-block;
+  width: 40px;
+}
+
+#civitutorial-admin-top .description {
+  margin-left: 45px;
+}
+
+#civitutorial-admin .ui-widget-content,
+#civitutorial-admin .ui-state-active {
+  background: #828282;
+  color: white;
+  padding: 5px 10px;
+}
+#civitutorial-admin a.crm-hover-button {
+  color: white;
+}
+
+#civitutorial-admin .ui-accordion-header {
+  padding: 5px 30px;
+}
+
+#civitutorial-admin .civitutorial-step-remove {
+  position: absolute;
+  right: 10px;
+  top: 5px;
+}
+
+#civitutorial-admin .civitutorial-step-content textarea {
+  width: 100%;
+  min-height: 80px;
+}
+
+#civitutorial-steps {
+  counter-reset: civitutorial-step-counter;
+}
+#civitutorial-steps .civitutorial-step-icon {
+  background: #b0d47f;
+  width: 26px;
+  height: 26px;
+  position: absolute;
+  left: 3px;
+  border-radius: 13px;
+  top: 3px;
+  text-align: center;
+  padding-top: 4px;
+  counter-increment: civitutorial-step-counter;
+  box-sizing: border-box;
+}
+
+#civitutorial-steps .ui-state-active .civitutorial-step-icon {
+  background: #80b33d;
+}
+
+#civitutorial-steps .civitutorial-step-icon:empty:before {
+  content: counter(civitutorial-step-counter);
+  font-weight: bold;
+}
+
+#civitutorial-steps .crm-form-text,
+#civitutorial-steps .crm-icon-picker-button {
+  font-size: 12px;
+}
+#civitutorial-steps select {
+  font-size: 11px;
+}
