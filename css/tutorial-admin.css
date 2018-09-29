@@ -63,6 +63,12 @@ body.civitutorial-admin-open .hopscotch-nav-button {
 
 #civitutorial-admin label {
   font-size: 13px;
+  color: white;
+}
+
+#civitutorial-admin [contenteditable=true]:empty:before {
+  content: attr(placeholder);
+  display: block;
 }
 
 #civitutorial-admin-top label {

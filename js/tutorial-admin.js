@@ -232,7 +232,7 @@
     return _.template(
       '<h5 class="civitutorial-step-title">' +
       '  <div class="civitutorial-step-icon"><% if(icon) { %><i class="crm-i <%= icon %>"></i><% } %></div>' +
-      '  <div contenteditable="true" class="crm-editable-enabled" name="title"><%= title || ts("Untitled") %></div>' +
+      '  <div contenteditable="true" class="crm-editable-enabled" placeholder="<%- ts("Untitled") %>" name="title"><%= title %></div>' +
       '  <i class="crm-i fa-window-close-o civitutorial-step-remove"></i>' +
       '</h5>' +
       '<div class="civitutorial-step-content">' +
