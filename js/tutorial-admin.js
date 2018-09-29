@@ -200,8 +200,10 @@
 
   function mainTemplate() {
     return _.template(
-      '<button id="civitutorial-admin-save" disabled="disabled"><i class="crm-i fa-check"></i></button>' +
-      '<button type="button" id="civitutorial-admin-close"><i class="crm-i fa-close"></i></button>' +
+      '<div id="civitutorial-admin-buttons">' +
+      '  <button id="civitutorial-admin-save" disabled="disabled"><i class="crm-i fa-check"></i></button>' +
+      '  <button type="button" id="civitutorial-admin-close"><i class="crm-i fa-close"></i></button>' +
+      '</div>' +
       '<h4>' + ts('Edit Tutorial') + '</h4>' +
       '<div id="civitutorial-admin-top">' +
       '  <div>' +
@@ -269,7 +271,7 @@
       $('body').addClass('civitutorial-admin-open');
     }, 10);
     $('#civitutorial-admin')
-      .css('padding-top', '' + $('#civicrm-menu').height() + 'px')
+      .css('padding-top', '' + ($('#civicrm-menu').height() + 10) + 'px')
       .html(mainTemplate()(tour))
       .submit(save);
     $('#civitutorial-admin-close').click(close);

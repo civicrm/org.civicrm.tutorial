@@ -44,15 +44,10 @@ body.civitutorial-admin-open .hopscotch-nav-button {
 }
 
 #civitutorial-admin #civitutorial-admin-close {
-  position: absolute;
-  top: 40px;
-  right: 10px;
   background: #9a373c;
 }
-#civitutorial-admin-save {
-  position: absolute;
-  top: 40px;
-  right: 50px;
+#civitutorial-admin-buttons {
+  float: right;
 }
 #civitutorial-admin #civitutorial-add-step {
   padding: 5px 9px;
