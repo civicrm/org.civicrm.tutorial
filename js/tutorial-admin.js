@@ -1,6 +1,6 @@
 (function($, _, ts) {
   var tour,
-    targetField,
+    currentStep = 0,
     ESC_KEY = 27,
     ENTER_KEY = 13,
     saved = true,
@@ -78,8 +78,13 @@
 
   function defaultUrl() {
     var path = window.location.pathname,
+      query = window.location.search,
       pos = path.indexOf('/civicrm/');
-    return path.slice(pos + 1);
+    if (pos > -1) {
+      return path.slice(pos + 1);
+    }
+    pos = query.indexOf('civicrm/');
+    return query.slice(pos).split('&')[0];
   }
 
   function close() {
@@ -93,35 +98,66 @@
     CRM.api3('Tutorial', 'create', tour, true);
   }
 
+  function openPreview() {
+    hopscotch.endTour();
+    var step = _.cloneDeep(tour.steps[currentStep]);
+    step.title = step.title || ' ';
+    step.content = step.content || ' ';
+    if (step.target) {
+      hopscotch.startTour({
+        id: 'preview-tour-' + currentStep,
+        steps: [step],
+        i18n: {stepNums: [step.icon ? '<i class="crm-i ' + step.icon + '"></i>' : currentStep + 1]}
+      });
+    }
+  }
+
   function selectTarget(e) {
-    targetField = $(e.target);
+    hopscotch.endTour();
     e.stopImmediatePropagation();
     $('body')
       .addClass('civitutorial-select-target')
       .on('click.tutorialAdmin', onTargetClick)
-      .on('keydown.tutorialAdmin', doneSelecting);
+      .on('keydown.tutorialAdmin', doneSelecting)
+      .find('.select2-input, .select2-choice, .select2-focusser, .select2-chosen').click(onTargetClick);
   }
 
   function doneSelecting() {
     $('body')
       .removeClass('civitutorial-select-target')
+      .off('.tutorialAdmin')
+      .find('*')
       .off('.tutorialAdmin');
   }
 
   function onTargetClick(e) {
-    var $target = $(e.target);
-    if ($target.closest('#civitutorial-admin').length < 1) {
-      e.preventDefault();
-      pickBestTarget($target);
-    }
     doneSelecting();
+    if ($(e.target).closest('#civitutorial-admin').length < 1) {
+      e.preventDefault();
+      pickBestTarget($(document.elementFromPoint(e.clientX, e.clientY)));
+    }
   }
 
-  function pickBestTarget($target) {
-    if ($target.attr('id')) {
-      targetField.val('#' + $target.attr('id'));
-    } else if ($target.attr('class') && !$target.is('span, strong, i, b, em')) {
-      targetField.val('.' + $target.attr('class').replace(/ /g, '.'));
+  function pickBestTarget($target, child) {
+    var id, name, selector,
+      targetField = $('.civitutorial-step-content').eq(currentStep).find('[name=target]'),
+      select2 = $target.closest('.select2-container'),
+      classes = _.trim($target.attr('class') || '');
+    console.log('class', classes);
+    child = child || '';
+    if (select2.length) {
+      pickBestTarget(select2.parent(), ' .select2-container');
+    }
+    else if ($target.attr('id')) {
+      targetField.val('#' + $target.attr('id') + child).change();
+    } else if (classes && !$target.is('span, strong, i, b, em')) {
+      id = $target.closest('[id]').attr('id');
+      name = $target.attr('name');
+      selector = (id ? '#' + id + ' ' : '') + (name ? '[name="' + name + '"]' : ' .' + classes.replace(/[ ]+/g, '.'));
+      if ($(selector).index($target) > 0) {
+        selector += ':eq(' + $(selector).index($target) + ')';
+      }
+      targetField.val(selector + child).change();
     } else {
       pickBestTarget($target.parent());
     }
@@ -144,13 +180,18 @@
       val = val ? val.split(',') : [];
     }
     values[fieldName] = val;
+    if (fieldName === 'target' || fieldName === 'placement') {
+      openPreview();
+    }
     setSaved(false);
   }
 
   function updateIcon() {
-    var icon = $(this).val(),
+    var val = $(this).val(),
+      icon = val ? '<i class="crm-i ' + val + '"></i>' : '';
       header = $(this).closest('.civitutorial-step-content').prev().find('.civitutorial-step-icon');
-    header.html(icon ? '<i class="crm-i ' + icon + '"></i>' : '');
+    header.html(icon);
+    $('.hopscotch-bubble-number').html(icon || currentStep+1);
   }
 
   function renderStep(step, num) {
@@ -199,7 +240,7 @@
       '  <div>' +
       '    <label>' + ts('Element') + ' <span class="crm-marker">*</span></label>' +
       '    <input name="target" class="crm-form-text twenty" value="<%= target %>" required />' +
-      '    <div class="description">' + ts('Css selector of page element.') + '</div>' +
+      '    <div class="description">' + ts('Click to select page element.') + '</div>' +
       '  </div>' +
       '  <div>' +
       '    <label>' + ts('Placement') + ' <span class="crm-marker">*</span></label>' +
@@ -239,8 +280,12 @@
     _.each(tour.steps, renderStep);
     $('#civitutorial-steps')
       .on('change input', ':input[name], [contenteditable]', function() {
-        var parentClass = $(this).attr('name') == 'title' ? '.civitutorial-step-title' : '.civitutorial-step-content',
-          index = $(this).prevAll(parentClass).length;
+        var name = $(this).attr('name'),
+          parentClass = name == 'title' ? '.civitutorial-step-title' : '.civitutorial-step-content',
+          index = $(this).closest(parentClass).prevAll(parentClass).length;
+        if (index === currentStep && (name === 'title' || name === 'content')) {
+          $('.hopscotch-bubble-container .hopscotch-' + name).html(name === 'title' ? $(this).html() : $(this).val());
+        }
         updateFieldVal($(this), tour.steps[index]);
       })
       .on('change', '[name=icon]', updateIcon)
@@ -252,7 +297,12 @@
       })
       .on('click', '[name=target]', selectTarget)
       .on('click', '.civitutorial-step-remove', deleteStep)
+      .on('accordionbeforeactivate', function(e, ui) {
+        currentStep = $('.civitutorial-step-title').index(ui.newHeader);
+        openPreview();
+      })
       .accordion({icons: false}).find('h5').off('keydown');
+    openPreview();
   }
 
 })(CRM.$, CRM._, CRM.ts('org.civicrm.tutorial'));
