@@ -142,17 +142,22 @@ body.civitutorial-admin-open .hopscotch-nav-button {
   font-size: 11px;
 }
 
-body.civitutorial-select-target {
-  border: 5px solid red;
-  transition: none;
+body.civitutorial-select-target #civitutorial-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border: 3px solid blue;
+  height: 100%;
+  width: calc(100% - 350px);
+  margin-right: 350px;
+  background-color: rgba(0, 0, 255, .05);
+  z-index: 99999999999;
+  box-sizing: border-box;
 }
-body.civitutorial-select-target,
 body.civitutorial-select-target * {
   cursor: crosshair !important;
-}
-body.civitutorial-select-target * {
-  pointer-events: none;
+  /*pointer-events: none;*/
 }
 body.civitutorial-select-target #civitutorial-admin * {
-  pointer-events: auto;
+  /*pointer-events: auto;*/
 }

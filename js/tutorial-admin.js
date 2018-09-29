@@ -88,7 +88,7 @@
   }
 
   function close() {
-    $('#civitutorial-admin').remove();
+    $('#civitutorial-admin, #civitutorial-overlay').remove();
     $('body').removeClass('civitutorial-admin-open');
   }
 
@@ -263,7 +263,7 @@
   function editTour() {
     hopscotch.endTour();
     setDefaults();
-    $('body').append('<form id="civitutorial-admin" class="crm-container"></form>');
+    $('body').append('<form id="civitutorial-admin" class="crm-container"></form><div id="civitutorial-overlay"></div>');
     // Slight delay so css animation works
     window.setTimeout(function () {
       $('body').addClass('civitutorial-admin-open');
