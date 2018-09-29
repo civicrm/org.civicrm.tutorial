@@ -1,5 +1,6 @@
 (function($, _, ts) {
   var tour,
+    oldIndex,
     currentStep = 0,
     ESC_KEY = 27,
     ENTER_KEY = 13,
@@ -64,11 +65,10 @@
   }
 
   function deleteStep() {
-    var title = $(this).closest('.civitutorial-step-title'),
-      index = title.prevAll('.civitutorial-step-title').length;
+    var $step = $(this).closest('.civitutorial-step'),
+      index = $step.index();
     tour.steps.splice(index, 1);
-    title.next().remove();
-    title.remove();
+    $step.remove();
     $('#civitutorial-steps').accordion('refresh').find('h5').off('keydown');
   }
 
@@ -100,15 +100,17 @@
 
   function openPreview() {
     hopscotch.endTour();
-    var step = _.cloneDeep(tour.steps[currentStep]);
-    step.title = step.title || ' ';
-    step.content = step.content || ' ';
-    if (step.target) {
-      hopscotch.startTour({
-        id: 'preview-tour-' + currentStep,
-        steps: [step],
-        i18n: {stepNums: [step.icon ? '<i class="crm-i ' + step.icon + '"></i>' : currentStep + 1]}
-      });
+    if (tour.steps[currentStep]) {
+      var step = _.cloneDeep(tour.steps[currentStep]);
+      step.title = step.title || ' ';
+      step.content = step.content || ' ';
+      if (step.target) {
+        hopscotch.startTour({
+          id: 'preview-tour-step' + currentStep,
+          steps: [step],
+          i18n: {stepNums: [step.icon ? '<i class="crm-i ' + step.icon + '"></i>' : currentStep + 1]}
+        });
+      }
     }
   }
 
@@ -143,7 +145,6 @@
       targetField = $('.civitutorial-step-content').eq(currentStep).find('[name=target]'),
       select2 = $target.closest('.select2-container'),
       classes = _.trim($target.attr('class') || '');
-    console.log('class', classes);
     child = child || '';
     if (select2.length) {
       pickBestTarget(select2.parent(), ' .select2-container');
@@ -187,11 +188,26 @@
   }
 
   function updateIcon() {
-    var val = $(this).val(),
+    var val = $('.civitutorial-step').eq(currentStep).find('[name=icon]').val(),
       icon = val ? '<i class="crm-i ' + val + '"></i>' : '';
-      header = $(this).closest('.civitutorial-step-content').prev().find('.civitutorial-step-icon');
-    header.html(icon);
+    $('.civitutorial-step').eq(currentStep).find('.civitutorial-step-icon').html(icon);
     $('.hopscotch-bubble-number').html(icon || currentStep+1);
+  }
+
+  function sortStart(e, ui) {
+    oldIndex = $(ui.item).index();
+  }
+
+  function sortStop(e, ui) {
+    var item = tour.steps[oldIndex],
+      newIndex = $(ui.item).index();
+    if (newIndex !== oldIndex) {
+      tour.steps.splice(oldIndex, 1);
+      tour.steps.splice(newIndex, 0, item);
+    }
+    currentStep = $('.civitutorial-step-title.ui-accordion-header-active', '#civitutorial-steps').closest('.civitutorial-step').index();
+    updateIcon();
+    $('#civitutorial-steps').accordion('refresh').find('h5').off('keydown');
   }
 
   function renderStep(step, num) {
@@ -230,33 +246,35 @@
 
   function stepTemplate() {
     return _.template(
-      '<h5 class="civitutorial-step-title">' +
-      '  <div class="civitutorial-step-icon"><% if(icon) { %><i class="crm-i <%= icon %>"></i><% } %></div>' +
-      '  <div contenteditable="true" class="crm-editable-enabled" placeholder="<%- ts("Untitled") %>" name="title"><%= title %></div>' +
-      '  <i class="crm-i fa-window-close-o civitutorial-step-remove"></i>' +
-      '</h5>' +
-      '<div class="civitutorial-step-content">' +
-      '  <div>' +
-      '    <textarea name="content" class="crm-form-textarea"><%= content %></textarea>' +
-      '  </div>' +
-      '  <div>' +
-      '    <label>' + ts('Element') + ' <span class="crm-marker">*</span></label>' +
-      '    <input name="target" class="crm-form-text twenty" value="<%= target %>" required />' +
-      '    <div class="description">' + ts('Click to select page element.') + '</div>' +
-      '  </div>' +
-      '  <div>' +
-      '    <label>' + ts('Placement') + ' <span class="crm-marker">*</span></label>' +
-      '    <select name="placement" class="crm-form-select" required >' +
-      '      <option value="top" <% if (placement == "top") { %> selected="selected" <% } %>>' + ts('Top') + '</option>' +
-      '      <option value="bottom" <% if (placement == "bottom") { %> selected="selected" <% } %>>' + ts('Bottom') + '</option>' +
-      '      <option value="left" <% if (placement == "left") { %> selected="selected" <% } %>>' + ts('Left') + '</option>' +
-      '      <option value="right" <% if (placement == "right") { %> selected="selected" <% } %>>' + ts('Right') + '</option>' +
-      '    </select>' +
-      '  </div>' +
-      '  <div>' +
-      '    <label>' + ts('Icon') + '</label>' +
-      '    <input name="icon" class="crm-form-text crm-icon-picker" allowclear="1" value="<%= icon %>" />' +
-      '    <a class="crm-hover-button crm-clear-link" <% if(!icon) { %>style="visibility:hidden;"<% } %>><i class="crm-i fa-times"></i></a>' +
+      '<div class="civitutorial-step">' +
+      '  <h5 class="civitutorial-step-title">' +
+      '    <div class="civitutorial-step-icon"><% if(icon) { %><i class="crm-i <%= icon %>"></i><% } %></div>' +
+      '    <div contenteditable="true" class="crm-editable-enabled" placeholder="<%- ts("Untitled") %>" name="title"><%= title %></div>' +
+      '    <i class="crm-i fa-window-close-o civitutorial-step-remove"></i>' +
+      '  </h5>' +
+      '  <div class="civitutorial-step-content">' +
+      '    <div>' +
+      '      <textarea name="content" class="crm-form-textarea"><%= content %></textarea>' +
+      '    </div>' +
+      '    <div>' +
+      '      <label>' + ts('Element') + ' <span class="crm-marker">*</span></label>' +
+      '      <input name="target" class="crm-form-text twenty" value="<%= target %>" required />' +
+      '      <div class="description">' + ts('Click to select page element.') + '</div>' +
+      '    </div>' +
+      '    <div>' +
+      '      <label>' + ts('Placement') + ' <span class="crm-marker">*</span></label>' +
+      '      <select name="placement" class="crm-form-select" required >' +
+      '        <option value="top" <% if (placement == "top") { %> selected="selected" <% } %>>' + ts('Top') + '</option>' +
+      '        <option value="bottom" <% if (placement == "bottom") { %> selected="selected" <% } %>>' + ts('Bottom') + '</option>' +
+      '        <option value="left" <% if (placement == "left") { %> selected="selected" <% } %>>' + ts('Left') + '</option>' +
+      '        <option value="right" <% if (placement == "right") { %> selected="selected" <% } %>>' + ts('Right') + '</option>' +
+      '      </select>' +
+      '    </div>' +
+      '    <div>' +
+      '      <label>' + ts('Icon') + '</label>' +
+      '      <input name="icon" class="crm-form-text crm-icon-picker" allowclear="1" value="<%= icon %>" />' +
+      '      <a class="crm-hover-button crm-clear-link" <% if(!icon) { %>style="visibility:hidden;"<% } %>><i class="crm-i fa-times"></i></a>' +
+      '    </div>' +
       '  </div>' +
       '</div>'
     );
@@ -284,8 +302,7 @@
     $('#civitutorial-steps')
       .on('change input', ':input[name], [contenteditable]', function() {
         var name = $(this).attr('name'),
-          parentClass = name == 'title' ? '.civitutorial-step-title' : '.civitutorial-step-content',
-          index = $(this).closest(parentClass).prevAll(parentClass).length;
+          index = $(this).closest('.civitutorial-step').index();
         if (index === currentStep && (name === 'title' || name === 'content')) {
           $('.hopscotch-bubble-container .hopscotch-' + name).html(name === 'title' ? $(this).html() : $(this).val());
         }
@@ -301,10 +318,20 @@
       .on('click focus', '[name=target]', selectTarget)
       .on('click', '.civitutorial-step-remove', deleteStep)
       .on('accordionbeforeactivate', function(e, ui) {
-        currentStep = $('.civitutorial-step-title').index(ui.newHeader);
+        currentStep = $(ui.newHeader).closest('.civitutorial-step').index();
         openPreview();
       })
-      .accordion({icons: false}).find('h5').off('keydown');
+      .sortable({
+        axis: 'y',
+        handle: '.civitutorial-step-title',
+        cancel: '.civitutorial-step-remove, [contenteditable]',
+        start: sortStart,
+        update: sortStop
+      })
+      .accordion({
+        icons: false,
+        header: '.civitutorial-step-title'
+      }).find('h5').off('keydown');
     openPreview();
   }
 
