@@ -269,6 +269,7 @@
       $('body').addClass('civitutorial-admin-open');
     }, 10);
     $('#civitutorial-admin')
+      .css('padding-top', '' + $('#civicrm-menu').height() + 'px')
       .html(mainTemplate()(tour))
       .submit(save);
     $('#civitutorial-admin-close').click(close);
