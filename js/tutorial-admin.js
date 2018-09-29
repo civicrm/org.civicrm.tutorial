@@ -73,7 +73,7 @@
   }
 
   function defaultId() {
-    return _.kebabCase($('h1').first().text());
+    return _.kebabCase($('h1').first().text().toLowerCase());
   }
 
   function defaultUrl() {
@@ -298,7 +298,7 @@
           $(this).blur();
         }
       })
-      .on('click', '[name=target]', selectTarget)
+      .on('click focus', '[name=target]', selectTarget)
       .on('click', '.civitutorial-step-remove', deleteStep)
       .on('accordionbeforeactivate', function(e, ui) {
         currentStep = $('.civitutorial-step-title').index(ui.newHeader);
