@@ -2,16 +2,17 @@
   var tour,
     oldIndex,
     currentStep = 0,
-    ESC_KEY = 27,
     ENTER_KEY = 13,
     saved = true,
+    mainTemplate,
+    stepTemplate,
     stepDefaults = {
-    target: '',
-    title: '',
-    placement: 'bottom',
-    content: '',
-    icon: null
-  };
+      target: '',
+      title: '',
+      placement: 'bottom',
+      content: '',
+      icon: null
+    };
 
   $('#civicrm-menu').ready(function() {
     var tourMenu = $('.menu-item a[href$="#tutorial-admin"]');
@@ -215,11 +216,14 @@
   }
 
   function renderStep(step, num) {
-    $('#civitutorial-steps').append(stepTemplate()(_.extend({num: num+1}, stepDefaults, step))).trigger('crmLoad');
+    $('#civitutorial-steps').append(stepTemplate(_.extend({num: num+1}, stepDefaults, step))).trigger('crmLoad');
   }
 
-  function mainTemplate() {
-    return _.template(
+  function loadTemplates() {
+    if (mainTemplate) {
+      return;
+    }
+    mainTemplate = _.template(
       '<div id="civitutorial-admin-buttons">' +
       '  <button id="civitutorial-admin-save" disabled="disabled"><i class="crm-i fa-check"></i></button>' +
       '  <button type="button" id="civitutorial-admin-close"><i class="crm-i fa-close"></i></button>' +
@@ -246,10 +250,7 @@
       '<br />' +
       '<button type="button" id="civitutorial-add-step"><i class="crm-i fa-plus"></i> ' + ts('Add Step') + '</button>'
     );
-  }
-
-  function stepTemplate() {
-    return _.template(
+    stepTemplate = _.template(
       '<div class="civitutorial-step">' +
       '  <h5 class="civitutorial-step-title">' +
       '    <div class="civitutorial-step-icon"><% if(icon) { %><i class="crm-i <%= icon %>"></i><% } %></div>' +
@@ -285,16 +286,17 @@
   }
 
   function editTour() {
+    $('body').append('<form id="civitutorial-admin" class="crm-container"></form><div id="civitutorial-overlay"></div>');
     hopscotch.endTour();
     setDefaults();
-    $('body').append('<form id="civitutorial-admin" class="crm-container"></form><div id="civitutorial-overlay"></div>');
+    loadTemplates();
     // Slight delay so css animation works
     window.setTimeout(function () {
       $('body').addClass('civitutorial-admin-open');
     }, 10);
     $('#civitutorial-admin')
       .css('padding-top', '' + ($('#civicrm-menu').height() + 10) + 'px')
-      .html(mainTemplate()(tour))
+      .html(mainTemplate(tour))
       .submit(save);
     $('#civitutorial-admin-close').click(close);
     $('#civitutorial-add-step').click(createStep);
