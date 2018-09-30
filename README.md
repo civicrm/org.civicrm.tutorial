@@ -1,44 +1,25 @@
-# org.civicrm.tutorial
+# CiviCRM Tutorials
 
-![Screenshot](/images/screenshot.png)
+Create and display walkthrough tutorials for CiviCRM screens.
 
-(*FIXME: In one or two paragraphs, describe what the extension does and why one would download it. *)
-
-The extension is licensed under [AGPL-3.0](LICENSE.txt).
+![Screenshot](/images/view-tour.gif)
 
 ## Requirements
 
-* PHP v5.4+
-* CiviCRM (*FIXME: Version number*)
-
-## Installation (Web UI)
-
-This extension has not yet been published for installation via the web UI.
-
-## Installation (CLI, Zip)
-
-Sysadmins and developers may download the `.zip` file for this extension and
-install it with the command-line tool [cv](https://github.com/civicrm/cv).
-
-```bash
-cd <extension-dir>
-cv dl org.civicrm.tutorial@https://github.com/FIXME/org.civicrm.tutorial/archive/master.zip
-```
-
-## Installation (CLI, Git)
-
-Sysadmins and developers may clone the [Git](https://en.wikipedia.org/wiki/Git) repo for this extension and
-install it with the command-line tool [cv](https://github.com/civicrm/cv).
-
-```bash
-git clone https://github.com/FIXME/org.civicrm.tutorial.git
-cv en tutorial
-```
+* CiviCRM 4.7
 
 ## Usage
 
-(* FIXME: Where would a new user navigate to get started? What changes would they see? *)
+Once installed, visit the contact summary screen to view the default tour. It will be displayed to each user once.
 
-## Known Issues
+If you are an administrator, this extension will let you create new tours:
 
-(* FIXME *)
+![Screenshot](/images/edit-tour.gif)
+
+## To do:
+
+[] Support more than one tour per screen.
+[] Support angular pages and ajax popups & tabs.
+[] Support multilingual sites.
+
+The extension is licensed under [AGPL-3.0](LICENSE.txt).

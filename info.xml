@@ -20,7 +20,7 @@
   <compatibility>
     <ver>4.7</ver>
   </compatibility>
-  <comments>This is a new, undeveloped module</comments>
+  <comments>Support this extension by donating to CiviCRM!</comments>
   <civix>
     <namespace>CRM/Tutorial</namespace>
   </civix>

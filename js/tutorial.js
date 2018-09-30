@@ -24,9 +24,7 @@
         prevBtn: ts('Back')
       }
     };
-    if (!CRM.vars.tutorial.viewed) {
-      defaults.onClose = defaults.onEnd = endTour;
-    }
+    defaults.onClose = defaults.onEnd = endTour;
     var tour = _.extend(defaults, CRM.vars.tutorial);
 
     // Place icons in the step number circle if provided

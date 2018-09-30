@@ -33,6 +33,7 @@
   function setDefaults() {
     if (!CRM.vars) CRM.vars = {};
     if (!CRM.vars.tutorial) CRM.vars.tutorial = {};
+    currentStep = 0;
     CRM.vars.tutorial = _.extend({
       id: defaultId(),
       url: defaultUrl(),
@@ -40,6 +41,7 @@
       groups: []
     }, CRM.vars.tutorial);
     tour = CRM.vars.tutorial;
+    delete tour.viewed;
     if (!tour.steps.length) {
       addStep();
     }
@@ -88,6 +90,7 @@
   }
 
   function close() {
+    hopscotch.endTour();
     $('#civitutorial-admin, #civitutorial-overlay').remove();
     $('body').removeClass('civitutorial-admin-open');
   }
@@ -148,10 +151,11 @@
     child = child || '';
     if (select2.length) {
       pickBestTarget(select2.parent(), ' .select2-container');
-    }
-    else if ($target.attr('id')) {
+    } else if ($target.is('[id] > a')) {
+      pickBestTarget($target.parent());
+    } else if ($target.attr('id')) {
       targetField.val('#' + $target.attr('id') + child).change();
-    } else if (classes && !$target.is('span, strong, i, b, em')) {
+    } else if (classes && !$target.is('span, strong, i, b, em, p, hr')) {
       id = $target.closest('[id]').attr('id');
       name = $target.attr('name');
       selector = (id ? '#' + id + ' ' : '') + (name ? '[name="' + name + '"]' : ' .' + classes.replace(/[ ]+/g, '.'));
@@ -249,7 +253,7 @@
       '<div class="civitutorial-step">' +
       '  <h5 class="civitutorial-step-title">' +
       '    <div class="civitutorial-step-icon"><% if(icon) { %><i class="crm-i <%= icon %>"></i><% } %></div>' +
-      '    <div contenteditable="true" class="crm-editable-enabled" placeholder="<%- ts("Untitled") %>" name="title"><%= title %></div>' +
+      '    <div contenteditable="true" class="crm-editable-enabled" placeholder="<%- ts("No title") %>" name="title"><%= title %></div>' +
       '    <i class="crm-i fa-window-close-o civitutorial-step-remove"></i>' +
       '  </h5>' +
       '  <div class="civitutorial-step-content">' +
