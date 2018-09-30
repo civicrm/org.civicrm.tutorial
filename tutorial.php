@@ -152,7 +152,7 @@ function tutorial_civicrm_pageRun(&$page) {
  * @return array|mixed
  */
 function _civitutorial_get_files() {
-  $files = NULL;//Civi::cache('community_messages')->get('tutorials');
+  $files = Civi::cache('community_messages')->get('tutorials');
   if ($files === NULL) {
     $files = $paths = [];
     $directories = array_unique(explode(PATH_SEPARATOR, get_include_path()));

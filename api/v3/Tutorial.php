@@ -16,8 +16,9 @@ function civicrm_api3_tutorial_create($params) {
   $tutorial = $params;
   unset($tutorial['version'], $tutorial['check_permissions']);
   $dir = $filePath = Civi::paths()->getPath('[civicrm.files]/crm-tutorials');
-  if (!is_dir($dir));
-  mkdir($dir);
+  if (!is_dir($dir)) {
+    mkdir($dir);
+  }
   $filePath = Civi::paths()->getPath('[civicrm.files]/crm-tutorials/' . $tutorial['id'] . '.json');
   // Update file if exists
   foreach (_civitutorial_get_files() as $path => $file) {
@@ -26,6 +27,7 @@ function civicrm_api3_tutorial_create($params) {
     }
   }
   file_put_contents($filePath, json_encode($tutorial));
+  Civi::cache('community_messages')->delete('tutorials');
   return civicrm_api3_create_success($tutorial, $params, 'Tutorial', 'create');
 }
 
