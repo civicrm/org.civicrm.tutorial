@@ -216,7 +216,9 @@
   }
 
   function renderStep(step, num) {
-    $('#civitutorial-steps').append(stepTemplate(_.extend({num: num+1}, stepDefaults, step))).trigger('crmLoad');
+    $('#civitutorial-steps')
+      .append(stepTemplate(_.extend({num: num+1}, stepDefaults, step)))
+      .find('.crm-icon-picker').not('.iconpicker-widget').crmIconPicker();
   }
 
   function loadTemplates() {
