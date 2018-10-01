@@ -14,7 +14,7 @@ function civicrm_api3_tutorial_create($params) {
     throw new API_Exception("Mandatory key(s) missing from params array: id", "mandatory_missing", array("fields" => ['id']));
   }
   $tutorial = $params;
-  unset($tutorial['version'], $tutorial['check_permissions']);
+  unset($tutorial['version'], $tutorial['check_permissions'], $tutorial['viewed']);
   $dir = $filePath = Civi::paths()->getPath('[civicrm.files]/crm-tutorials');
   if (!is_dir($dir)) {
     mkdir($dir);

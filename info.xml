@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <extension key="org.civicrm.tutorial" type="module">
   <file>tutorial</file>
-  <name>Civi Tutorials</name>
+  <name>CiviTutorial</name>
   <description>Provides walkthrough tutorials for using CiviCRM screens.</description>
   <license>AGPL-3.0</license>
   <maintainer>
