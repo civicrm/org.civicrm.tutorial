@@ -92,7 +92,7 @@
 
   function close() {
     hopscotch.endTour();
-    $('#civitutorial-admin, #civitutorial-overlay').remove();
+    $('#civitutorial-admin, #civitutorial-overlay, #tutorial-admin-css').remove();
     $('body').removeClass('civitutorial-admin-open');
     if (!saved) {
       hopscotch.startTour({
@@ -313,10 +313,16 @@
           header: '.civitutorial-step-title'
         }).find('h5').off('keydown');
     });
-    // Slight delay so css animation works
-    window.setTimeout(function () {
+    // Set body class after stylesheet loads to trigger css animation
+    var cssFile = document.createElement('link');
+    cssFile.type = 'text/css';
+    cssFile.rel = 'stylesheet';
+    cssFile.id = 'tutorial-admin-css';
+    cssFile.onload = function() {
       $('body').addClass('civitutorial-admin-open');
-    }, 10);
+    };
+    cssFile.href = CRM.vars.tutorialAdmin.path + 'css/tutorial-admin.css';
+    $('body')[0].appendChild(cssFile);
     openPreview();
   }
 

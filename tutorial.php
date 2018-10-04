@@ -225,12 +225,11 @@ function _civitutorial_load($urlPath) {
     $resources = CRM_Core_Resources::singleton()
       ->addStyleFile('org.civicrm.tutorial', 'vendor/hopscotch/css/hopscotch.min.css')
       ->addScriptFile('org.civicrm.tutorial', 'vendor/hopscotch/js/hopscotch.min.js', 0, 'html-header')
-      ->addScriptFile('civicrm', 'js/jquery/jquery.crmIconPicker.js')
       ->addScriptFile('org.civicrm.tutorial', 'js/tutorial.js');
     if (CRM_Core_Permission::check('administer CiviCRM')) {
       $resources
-        ->addStyleFile('org.civicrm.tutorial', 'css/tutorial-admin.css')
         ->addScriptFile('org.civicrm.tutorial', 'js/tutorial-admin.js')
+        ->addScriptFile('civicrm', 'js/jquery/jquery.crmIconPicker.js')
         ->addVars('tutorialAdmin', [
           'path' => $resources->getUrl('org.civicrm.tutorial')
         ]);
