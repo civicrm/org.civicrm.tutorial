@@ -228,8 +228,17 @@ function _civitutorial_load($urlPath) {
       ->addScriptFile('civicrm', 'js/jquery/jquery.crmIconPicker.js')
       ->addScriptFile('org.civicrm.tutorial', 'js/tutorial.js');
     if (CRM_Core_Permission::check('administer CiviCRM')) {
-      $resources->addStyleFile('org.civicrm.tutorial', 'css/tutorial-admin.css');
-      $resources->addScriptFile('org.civicrm.tutorial', 'js/tutorial-admin.js');
+      $resources
+        ->addStyleFile('org.civicrm.tutorial', 'css/tutorial-admin.css')
+        ->addScriptFile('org.civicrm.tutorial', 'js/tutorial-admin.js')
+        ->addVars('tutorialAdmin', [
+          'path' => $resources->getUrl('org.civicrm.tutorial')
+        ]);
+      // Add strings from the html files for i18n.
+      $strings = new CRM_Core_Resources_Strings(Civi::cache('js_strings'));
+      foreach (glob(__DIR__ . '/html/*.html') as $file) {
+        $resources->addString($strings->get('org.civicrm.tutorial', $file, 'text/html'), 'org.civicrm.tutorial');
+      }
     }
     $tutorials = _civitutorial_get_files();
     foreach ($tutorials as $path => $tutorial) {

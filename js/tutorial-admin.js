@@ -222,124 +222,83 @@
   }
 
   function loadTemplates() {
+    var loaded = $.Deferred();
     if (mainTemplate) {
-      return;
+      loaded.resolve();
+    } else {
+      var t1 = $.get(CRM.vars.tutorialAdmin.path + 'html/admin_main_tpl.html')
+        .done(function (html) {
+          mainTemplate = _.template(html);
+        });
+      var t2 = $.get(CRM.vars.tutorialAdmin.path + 'html/admin_step_tpl.html')
+        .done(function (html) {
+          stepTemplate = _.template(html);
+        });
+      $.when(t1, t2).then(function() {
+        loaded.resolve();
+      });
     }
-    mainTemplate = _.template(
-      '<div id="civitutorial-admin-buttons">' +
-      '  <button id="civitutorial-admin-save" disabled="disabled"><i class="crm-i fa-check"></i></button>' +
-      '  <button type="button" id="civitutorial-admin-close"><i class="crm-i fa-close"></i></button>' +
-      '</div>' +
-      '<h4>' + ts('Edit Tutorial') + '</h4>' +
-      '<div id="civitutorial-admin-top">' +
-      '  <div>' +
-      '    <label>' + ts('Name') + ' <span class="crm-marker">*</span></label>' +
-      '    <input id="civitutorial-field-id" name="id" class="crm-form-text twenty" value="<%= id %>" required />' +
-      '    <div class="description">' + ts('Spaces and punctuation not allowed.') + '</div>' +
-      '  </div>' +
-      '  <div>' +
-      '    <label>' + ts('Page') + ' <span class="crm-marker">*</span></label>' +
-      '    <input id="civitutorial-field-url" name="url" class="crm-form-text twenty" value="<%= url %>" required />' +
-      '    <div class="description">' + ts('Relative url of page.') + '</div>' +
-      '  </div>' +
-      '  <div>' +
-      '    <label>' + ts('For') + '</label>' +
-      '    <input id="civitutorial-field-groups" name="groups" class="crm-form-text twenty" value="<%= groups ? groups.join(",") : "" %>" />' +
-      '    <div class="description">' + ts('Users who will see this tutorial.') + '</div>' +
-      '  </div>' +
-      '</div>' +
-      '<div id="civitutorial-steps"></div>' +
-      '<br />' +
-      '<button type="button" id="civitutorial-add-step"><i class="crm-i fa-plus"></i> ' + ts('Add Step') + '</button>'
-    );
-    stepTemplate = _.template(
-      '<div class="civitutorial-step">' +
-      '  <h5 class="civitutorial-step-title">' +
-      '    <div class="civitutorial-step-icon"><% if(icon) { %><i class="crm-i <%= icon %>"></i><% } %></div>' +
-      '    <div contenteditable="true" class="crm-editable-enabled" placeholder="<%- ts("No title") %>" name="title"><%= title %></div>' +
-      '    <i class="crm-i fa-window-close-o civitutorial-step-remove"></i>' +
-      '  </h5>' +
-      '  <div class="civitutorial-step-content">' +
-      '    <div>' +
-      '      <textarea name="content" class="crm-form-textarea"><%= content %></textarea>' +
-      '    </div>' +
-      '    <div>' +
-      '      <label>' + ts('Element') + ' <span class="crm-marker">*</span></label>' +
-      '      <input name="target" class="crm-form-text twenty" value="<%= target %>" required />' +
-      '      <div class="description">' + ts('Click to select page element.') + '</div>' +
-      '    </div>' +
-      '    <div>' +
-      '      <label>' + ts('Placement') + ' <span class="crm-marker">*</span></label>' +
-      '      <select name="placement" class="crm-form-select" required >' +
-      '        <option value="top" <% if (placement == "top") { %> selected="selected" <% } %>>' + ts('Top') + '</option>' +
-      '        <option value="bottom" <% if (placement == "bottom") { %> selected="selected" <% } %>>' + ts('Bottom') + '</option>' +
-      '        <option value="left" <% if (placement == "left") { %> selected="selected" <% } %>>' + ts('Left') + '</option>' +
-      '        <option value="right" <% if (placement == "right") { %> selected="selected" <% } %>>' + ts('Right') + '</option>' +
-      '      </select>' +
-      '    </div>' +
-      '    <div>' +
-      '      <label>' + ts('Icon') + '</label>' +
-      '      <input name="icon" class="crm-form-text crm-icon-picker" allowclear="1" value="<%= icon %>" />' +
-      '      <a class="crm-hover-button crm-clear-link" <% if(!icon) { %>style="visibility:hidden;"<% } %>><i class="crm-i fa-times"></i></a>' +
-      '    </div>' +
-      '  </div>' +
-      '</div>'
-    );
+    return loaded;
   }
 
   function editTour() {
     $('body').append('<form id="civitutorial-admin" class="crm-container"></form><div id="civitutorial-overlay"></div>');
     hopscotch.endTour();
     setDefaults();
-    loadTemplates();
+    loadTemplates().done(function() {
+      $('#civitutorial-admin')
+        .css('padding-top', '' + ($('#civicrm-menu').height() + 10) + 'px')
+        .html(mainTemplate(tour))
+        .submit(save);
+      $('#civitutorial-admin-close').click(close);
+      $('#civitutorial-add-step').click(createStep);
+      $('#civitutorial-field-groups').crmEntityRef({
+        entity: 'Group',
+        api: {id_field: 'name', params: {is_hidden: 0, is_active: 1}},
+        select: {placeholder: ts('Groups'), multiple: true, allowClear: true, minimumInputLength: 0}
+      });
+      $('input[id^="civitutorial-field"]').change(function () {
+        updateFieldVal($(this), tour);
+      });
+      _.each(tour.steps, renderStep);
+      $('#civitutorial-steps')
+        .on('change input', ':input[name], [contenteditable]', function () {
+          var name = $(this).attr('name'),
+            index = $(this).closest('.civitutorial-step').index();
+          if (index === currentStep && (name === 'title' || name === 'content')) {
+            $('.hopscotch-bubble-container .hopscotch-' + name).html(name === 'title' ? $(this).html() : $(this).val());
+          }
+          updateFieldVal($(this), tour.steps[index]);
+        })
+        .on('change', '[name=icon]', updateIcon)
+        .on('keydown', '[contenteditable]', function (e) {
+          if (e.which === ENTER_KEY) {
+            e.preventDefault();
+            $(this).blur();
+          }
+        })
+        .on('click focus', '[name=target]', selectTarget)
+        .on('click', '.civitutorial-step-remove', deleteStep)
+        .on('accordionbeforeactivate', function (e, ui) {
+          currentStep = $(ui.newHeader).closest('.civitutorial-step').index();
+          openPreview();
+        })
+        .sortable({
+          axis: 'y',
+          handle: '.civitutorial-step-title',
+          cancel: '.civitutorial-step-remove, [contenteditable]',
+          start: sortStart,
+          update: sortStop
+        })
+        .accordion({
+          icons: false,
+          header: '.civitutorial-step-title'
+        }).find('h5').off('keydown');
+    });
     // Slight delay so css animation works
     window.setTimeout(function () {
       $('body').addClass('civitutorial-admin-open');
     }, 10);
-    $('#civitutorial-admin')
-      .css('padding-top', '' + ($('#civicrm-menu').height() + 10) + 'px')
-      .html(mainTemplate(tour))
-      .submit(save);
-    $('#civitutorial-admin-close').click(close);
-    $('#civitutorial-add-step').click(createStep);
-    $('#civitutorial-field-groups').crmEntityRef({entity: 'Group', api: {id_field: 'name', params: {is_hidden: 0, is_active: 1}}, select: {placeholder: ts('Groups'), multiple: true, allowClear:true, minimumInputLength: 0}});
-    $('input[id^="civitutorial-field"]').change(function() {
-      updateFieldVal($(this), tour);
-    });
-    _.each(tour.steps, renderStep);
-    $('#civitutorial-steps')
-      .on('change input', ':input[name], [contenteditable]', function() {
-        var name = $(this).attr('name'),
-          index = $(this).closest('.civitutorial-step').index();
-        if (index === currentStep && (name === 'title' || name === 'content')) {
-          $('.hopscotch-bubble-container .hopscotch-' + name).html(name === 'title' ? $(this).html() : $(this).val());
-        }
-        updateFieldVal($(this), tour.steps[index]);
-      })
-      .on('change', '[name=icon]', updateIcon)
-      .on('keydown', '[contenteditable]', function(e) {
-        if (e.which === ENTER_KEY) {
-          e.preventDefault();
-          $(this).blur();
-        }
-      })
-      .on('click focus', '[name=target]', selectTarget)
-      .on('click', '.civitutorial-step-remove', deleteStep)
-      .on('accordionbeforeactivate', function(e, ui) {
-        currentStep = $(ui.newHeader).closest('.civitutorial-step').index();
-        openPreview();
-      })
-      .sortable({
-        axis: 'y',
-        handle: '.civitutorial-step-title',
-        cancel: '.civitutorial-step-remove, [contenteditable]',
-        start: sortStart,
-        update: sortStop
-      })
-      .accordion({
-        icons: false,
-        header: '.civitutorial-step-title'
-      }).find('h5').off('keydown');
     openPreview();
   }
 
