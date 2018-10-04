@@ -40,11 +40,11 @@ body.civitutorial-admin-open .hopscotch-nav-button {
 }
 #civitutorial-admin button[disabled] {
   cursor: default;
-  background: #557d31;
+  background: #787d75;
 }
 
 #civitutorial-admin #civitutorial-admin-close {
-  background: #9a373c;
+  background: #aa323b;
 }
 #civitutorial-admin-buttons {
   float: right;
@@ -169,8 +169,4 @@ body.civitutorial-select-target #civitutorial-overlay {
 }
 body.civitutorial-select-target * {
   cursor: crosshair !important;
-  /*pointer-events: none;*/
-}
-body.civitutorial-select-target #civitutorial-admin * {
-  /*pointer-events: auto;*/
 }

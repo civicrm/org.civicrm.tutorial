@@ -94,6 +94,24 @@
     hopscotch.endTour();
     $('#civitutorial-admin, #civitutorial-overlay').remove();
     $('body').removeClass('civitutorial-admin-open');
+    if (!saved) {
+      hopscotch.startTour({
+        id: 'admin-unsaved',
+        steps: [
+          {
+            target: $('.menumain a[href$="#tutorial-start"]').closest('.menumain')[0],
+            placement: 'bottom',
+            nextOnTargetClick: true,
+            title: ts('Unsaved Changes.'),
+            content: ts('Your tutorial has not been saved. You can get back into editing it from this menu; if you leave or refresh this page your changes will be lost.')
+          }
+        ],
+        i18n: {
+          doneBtn: ts('Close'),
+          stepNums: ['<i class="crm-i fa-info"></i>']
+        }
+      });
+    }
   }
 
   function save(e) {
@@ -110,7 +128,7 @@
       step.content = step.content || ' ';
       if (step.target) {
         hopscotch.startTour({
-          id: 'preview-tour-step' + currentStep,
+          id: 'preview-tour-step-' + currentStep,
           steps: [step],
           i18n: {stepNums: [step.icon ? '<i class="crm-i ' + step.icon + '"></i>' : currentStep + 1]}
         });
