@@ -3,6 +3,7 @@
     oldIndex,
     currentStep = 0,
     ENTER_KEY = 13,
+    TEXT_NODE = 3,
     saved = true,
     mainTemplate,
     stepTemplate,
@@ -20,7 +21,7 @@
       if (CRM.vars && CRM.vars.tutorial) {
         tourMenu.contents()
           .filter(function() {
-            return this.nodeType === 3;
+            return this.nodeType === TEXT_NODE;
           })
           .replaceWith(ts("Edit tour of this screen"));
       }
@@ -141,16 +142,12 @@
     e.stopImmediatePropagation();
     $('body')
       .addClass('civitutorial-select-target')
-      .on('click.tutorialAdmin', onTargetClick)
-      .on('keydown.tutorialAdmin', doneSelecting)
-      .find('.select2-input, .select2-choice, .select2-focusser, .select2-chosen').click(onTargetClick);
+      .on('click.tutorialAdmin', onTargetClick);
   }
 
   function doneSelecting() {
     $('body')
       .removeClass('civitutorial-select-target')
-      .off('.tutorialAdmin')
-      .find('*')
       .off('.tutorialAdmin');
   }
 
@@ -296,6 +293,7 @@
           }
         })
         .on('click focus', '[name=target]', selectTarget)
+        .on('keydown', '[name=target]', doneSelecting)
         .on('click', '.civitutorial-step-remove', deleteStep)
         .on('accordionbeforeactivate', function (e, ui) {
           currentStep = $(ui.newHeader).closest('.civitutorial-step').index();

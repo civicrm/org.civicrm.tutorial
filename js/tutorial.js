@@ -25,7 +25,7 @@
       }
     };
     defaults.onClose = defaults.onEnd = endTour;
-    var tour = _.extend(defaults, CRM.vars.tutorial);
+    var tour = _.extend(defaults, _.cloneDeep(CRM.vars.tutorial));
 
     // Place icons in the step number circle if provided
     tour.i18n.stepNums = _.map(tour.steps, function(step, i) {

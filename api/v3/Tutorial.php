@@ -26,7 +26,7 @@ function civicrm_api3_tutorial_create($params) {
       $tutorial += $file;
     }
   }
-  file_put_contents($filePath, json_encode($tutorial));
+  file_put_contents($filePath, json_encode($tutorial, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
   Civi::cache('community_messages')->delete('tutorials');
   return civicrm_api3_create_success($tutorial, $params, 'Tutorial', 'create');
 }
