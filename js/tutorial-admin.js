@@ -5,8 +5,11 @@
     ENTER_KEY = 13,
     TEXT_NODE = 3,
     saved = true,
-    mainTemplate,
-    stepTemplate,
+    templatesLoaded,
+    templates = {
+      admin_main_tpl: null,
+      admin_step_tpl: null
+    },
     stepDefaults = {
       target: '',
       title: '',
@@ -232,28 +235,24 @@
 
   function renderStep(step, num) {
     $('#civitutorial-steps')
-      .append(stepTemplate(_.extend({num: num+1}, stepDefaults, step)))
+      .append(templates.admin_step_tpl(_.extend({num: num+1}, stepDefaults, step)))
       .find('.crm-icon-picker').not('.iconpicker-widget').crmIconPicker();
   }
 
   function loadTemplates() {
-    var loaded = $.Deferred();
-    if (mainTemplate) {
-      loaded.resolve();
-    } else {
-      var t1 = $.get(CRM.vars.tutorialAdmin.path + 'html/admin_main_tpl.html')
-        .done(function (html) {
-          mainTemplate = _.template(html);
-        });
-      var t2 = $.get(CRM.vars.tutorialAdmin.path + 'html/admin_step_tpl.html')
-        .done(function (html) {
-          stepTemplate = _.template(html);
-        });
-      $.when(t1, t2).then(function() {
-        loaded.resolve();
+    if (!templatesLoaded) {
+      templatesLoaded = $.Deferred();
+      $.each(templates, function(file) {
+        $.get(CRM.vars.tutorialAdmin.path + 'html/' + file + '.html')
+          .done(function (html) {
+            templates[file] = _.template(html);
+            if (_.min(templates) !== null) {
+              templatesLoaded.resolve();
+            }
+          });
       });
     }
-    return loaded;
+    return templatesLoaded;
   }
 
   function editTour() {
@@ -263,7 +262,7 @@
     loadTemplates().done(function() {
       $('#civitutorial-admin')
         .css('padding-top', '' + ($('#civicrm-menu').height() + 10) + 'px')
-        .html(mainTemplate(tour))
+        .html(templates.admin_main_tpl(tour))
         .submit(save);
       $('#civitutorial-admin-close').click(close);
       $('#civitutorial-add-step').click(createStep);
