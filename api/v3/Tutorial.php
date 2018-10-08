@@ -26,6 +26,11 @@ function civicrm_api3_tutorial_create($params) {
       $tutorial += $file;
     }
   }
+  // Workaround for the api3 html input encoder - html IS allowed in these fields
+  foreach ($tutorial['steps'] as &$step) {
+    $step['title'] = str_replace(['&lt;', '&gt;'], ['<', '>'], $step['title']);
+    $step['content'] = str_replace(['&lt;', '&gt;'], ['<', '>'], $step['content']);
+  }
   file_put_contents($filePath, json_encode($tutorial, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
   Civi::cache('community_messages')->delete('tutorials');
   return civicrm_api3_create_success($tutorial, $params, 'Tutorial', 'create');
