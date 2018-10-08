@@ -19,7 +19,7 @@ function civicrm_api3_tutorial_create($params) {
   if (!is_dir($dir)) {
     mkdir($dir);
   }
-  $filePath = Civi::paths()->getPath('[civicrm.files]/crm-tutorials/' . $tutorial['id'] . '.json');
+  $filePath = Civi::paths()->getPath('[civicrm.files]/crm-tutorials/' . $tutorial['id'] . '.js');
   // Update file if exists
   foreach (_civitutorial_get_files() as $path => $file) {
     if ($tutorial['id'] == $file['id'] && $path == $filePath) {
@@ -31,7 +31,9 @@ function civicrm_api3_tutorial_create($params) {
     $step['title'] = str_replace(['&lt;', '&gt;'], ['<', '>'], $step['title']);
     $step['content'] = str_replace(['&lt;', '&gt;'], ['<', '>'], $step['content']);
   }
-  file_put_contents($filePath, json_encode($tutorial, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+  // Id is redundant with filename
+  unset($tutorial['id']);
+  file_put_contents($filePath, _civitutorial_encode($tutorial) . "\n");
   Civi::cache('community_messages')->delete('tutorials');
   return civicrm_api3_create_success($tutorial, $params, 'Tutorial', 'create');
 }
@@ -44,7 +46,7 @@ function civicrm_api3_tutorial_create($params) {
  * @throws API_Exception
  */
 function civicrm_api3_tutorial_delete($params) {
-  $filePath = Civi::paths()->getPath('[civicrm.files]/crm-tutorials/' . $params['id'] . '.json');
+  $filePath = Civi::paths()->getPath('[civicrm.files]/crm-tutorials/' . $params['id'] . '.js');
   unlink($filePath);
   return civicrm_api3_create_success();
 }

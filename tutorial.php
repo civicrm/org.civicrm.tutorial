@@ -161,12 +161,12 @@ function _civitutorial_get_files() {
     foreach ($directories as $directory) {
       $dir = \CRM_Utils_File::addTrailingSlash($directory) . 'crm-tutorials';
       if (is_dir($dir)) {
-        foreach (glob("$dir/*.json") as $file) {
+        foreach (glob("$dir/*.js") as $file) {
           $matches = [];
-          preg_match('/([-a-z_A-Z0-9]*).json/', $file, $matches);
+          preg_match('/([-a-z_A-Z0-9]*).js/', $file, $matches);
           $id = $matches[1];
           $paths[$id] = $file;
-          $files[$id] = json_decode(file_get_contents($file), TRUE);
+          $files[$id] = _civitutorial_decode(file_get_contents($file));
           $files[$id]['id'] = $id;
         }
       }
@@ -175,6 +175,30 @@ function _civitutorial_get_files() {
     Civi::cache('community_messages')->set('tutorials', $files, (60 * 60 * 24 * 30));
   }
   return $files;
+}
+
+/**
+ * Encodes json and places ts() around translatable strings.
+ *
+ * @param $tutorial
+ * @return string
+ */
+function _civitutorial_encode($tutorial) {
+  $json = json_encode($tutorial, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+  return preg_replace('#"(title|content)": (".+")#', '"$1": ts($2)', $json);
+}
+
+/**
+ * Decodes json after localizing strings
+ *
+ * @param $json
+ * @return mixed
+ */
+function _civitutorial_decode($json) {
+  $json = preg_replace_callback('#: ts\("(.*)"\)#', function($matches) {
+    return ': "' . E::ts($matches[1]) . '"';
+  }, $json);
+  return json_decode($json, TRUE);
 }
 
 /**
