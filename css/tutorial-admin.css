@@ -79,7 +79,7 @@ body.civitutorial-admin-open .hopscotch-nav-button {
 
 #civitutorial-admin-top label {
   display: inline-block;
-  width: 45px;
+  min-width: 45px;
 }
 
 #civitutorial-admin-top .description {
@@ -105,6 +105,11 @@ body.civitutorial-admin-open .hopscotch-nav-button {
   right: 10px;
   top: 5px;
   cursor: pointer;
+}
+
+/* Prevent deleting every step */
+.civitutorial-step:only-child .civitutorial-step-remove {
+  display: none;
 }
 
 #civitutorial-admin .civitutorial-step-content textarea {

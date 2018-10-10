@@ -5,19 +5,23 @@
 <h4><%- ts('Edit Tutorial') %></h4>
 <div id="civitutorial-admin-top">
   <div>
-    <label><%- ts('Name') %> <span class="crm-marker">*</span></label>
-    <input id="civitutorial-field-id" name="id" class="crm-form-text twenty" value="<%= id %>" required />
-    <div class="description"><%- ts('Spaces and punctuation not allowed.') %></div>
+    <label for="civitutorial-field-title"><%- ts('Title') %> <span class="crm-marker">*</span></label>
+    <input id="civitutorial-field-title" name="title" class="crm-form-text twenty" value="<%= title %>" required />
+    <div class="description"><%- ts('Title as it will appear in the menu.') %></div>
   </div>
   <div>
-    <label><%- ts('Page') %> <span class="crm-marker">*</span></label>
+    <label for="civitutorial-field-url"><%- ts('Page') %> <span class="crm-marker">*</span></label>
     <input id="civitutorial-field-url" name="url" class="crm-form-text twenty" value="<%= url %>" required />
     <div class="description"><%- ts('Relative url of page.') %></div>
   </div>
   <div>
-    <label><%- ts('For') %></label>
+    <label for="civitutorial-field-groups"><%- ts('For') %></label>
     <input id="civitutorial-field-groups" name="groups" class="crm-form-text twenty" value="<%= groups ? groups.join(',') : '' %>" />
     <div class="description"><%- ts('Users who will see this tutorial.') %></div>
+  </div>
+  <div>
+    <label for="civitutorial-field-auto_start"><%- ts('Auto-run for first-time users') %></label>
+    <input id="civitutorial-field-auto_start" type="checkbox" name="auto_start" <% if (auto_start) { %> checked="checked" <% } %>  />
   </div>
 </div>
 <div id="civitutorial-steps"></div>

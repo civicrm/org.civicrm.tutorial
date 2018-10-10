@@ -202,13 +202,26 @@ function _civitutorial_decode($json) {
 }
 
 /**
+ * See if a tutorial matches the current path
+ *
  * @param $currentPath
  * @param $tutorialPath
  * @return bool
  */
 function _civitutorial_match_url($currentPath, $tutorialPath) {
   $url = parse_url($tutorialPath);
-  return ($currentPath == $url['path']);
+  if (trim($currentPath, '/') == trim($url['path'], '/')) {
+    if (!empty($url['query'])) {
+      foreach (explode('&', $url['query']) as $item) {
+        list($param, $val) = array_pad(explode('=', $item), 2, '');
+        if ($item && CRM_Utils_Array::value($param, $_GET) != $val) {
+          return FALSE;
+        }
+      }
+    }
+    return TRUE;
+  }
+  return FALSE;
 }
 
 /**
@@ -244,7 +257,10 @@ function _civitutorial_load($urlPath) {
   // Because this hook gets called twice sometimes
   static $ranAlready = FALSE;
   $cid = CRM_Core_Session::getLoggedInContactID();
-  if ($cid && !$ranAlready && !CRM_Core_Resources::isAjaxMode() && CRM_Core_Permission::check('access CiviCRM')) {
+  if ($cid && !$ranAlready &&
+    !CRM_Core_Resources::isAjaxMode() && CRM_Utils_Array::value('HTTP_X_REQUESTED_WITH', $_SERVER) != 'XMLHttpRequest' &&
+    CRM_Core_Permission::check('access CiviCRM')
+  ) {
     $ranAlready = TRUE;
     $resources = CRM_Core_Resources::singleton()
       ->addStyleFile('org.civicrm.tutorial', 'vendor/hopscotch/css/hopscotch.min.css')
@@ -254,8 +270,9 @@ function _civitutorial_load($urlPath) {
       $resources
         ->addScriptFile('org.civicrm.tutorial', 'js/tutorial-admin.js')
         ->addScriptFile('civicrm', 'js/jquery/jquery.crmIconPicker.js')
-        ->addVars('tutorialAdmin', [
-          'path' => $resources->getUrl('org.civicrm.tutorial')
+        ->addVars('tutorial', [
+          'basePath' => $resources->getUrl('org.civicrm.tutorial'),
+          'urlPath' => $urlPath,
         ]);
       // Add strings from the html files for i18n.
       $strings = new CRM_Core_Resources_Strings(Civi::cache('js_strings'));
@@ -264,6 +281,7 @@ function _civitutorial_load($urlPath) {
       }
     }
     $tutorials = _civitutorial_get_files();
+    $matches = [];
     foreach ($tutorials as $path => $tutorial) {
       if (_civitutorial_match_url($urlPath, $tutorial['url']) && _civitutorial_match_group($tutorial)) {
         // Check if user has viewed this tutorial already
@@ -271,14 +289,10 @@ function _civitutorial_load($urlPath) {
         $settings = Civi::service('settings_manager')->getBagByContact(NULL, $cid);
         $views = (array) $settings->get('tutorials');
         $tutorial['viewed'] = !empty($views[$tutorial['id']]);
-        $resources->addVars('tutorial', $tutorial);
-        // Mark this tutorial as viewed
-        if (empty($views[$tutorial['id']])) {
-          $views[$tutorial['id']] = date('Y-m-d H:i:s');
-          $settings->set('tutorials', $views);
-        }
+        $matches['items'][$tutorial['id']] = $tutorial;
       }
     }
+    $resources->addVars('tutorial', $matches);
   }
 }
 
@@ -289,19 +303,32 @@ function _civitutorial_load($urlPath) {
  */
 function tutorial_civicrm_navigationMenu(&$menu) {
   _tutorial_civix_insert_navigation_menu($menu, 'Support', [
-    'label' => ts('Take a tour of this screen'),
+    'label' => 'View Tutorial',
     'url' => '#tutorial-start',
     'name' => 'tutorial',
     'permission' => 'access CiviCRM',
-    'title' => ts('Get an interactive walkthrough of this screen'),
     'icon' => 'crm-i fa-play',
   ]);
   _tutorial_civix_insert_navigation_menu($menu, 'Support', [
-    'label' => ts('Create tour of this screen'),
-    'url' => '#tutorial-admin',
-    'name' => 'tutorial_admin',
+    'label' => ts('Edit tutorial'),
+    'url' => '#tutorial-edit',
+    'name' => 'tutorial_edit',
     'permission' => 'administer CiviCRM',
-    'title' => ts('Create an interactive walkthrough for your users'),
-    'icon' => 'crm-i fa-map',
+    'separator' => 2,
+    'icon' => 'crm-i fa-pencil-square',
   ]);
+  _tutorial_civix_insert_navigation_menu($menu, 'Support', [
+    'label' => ts('Create new tutorial'),
+    'url' => '#tutorial-add',
+    'name' => 'tutorial_add',
+    'permission' => 'administer CiviCRM',
+    'icon' => 'crm-i fa-plus-circle',
+    'separator' => 2,
+  ]);
+}
+
+function tutorial_civicrm_alterAPIPermissions($entity, $action, &$params, &$permissions) {
+  if ($entity === 'tutorial') {
+    $permissions['tutorial']['mark'] = ['access CiviCRM'];
+  }
 }

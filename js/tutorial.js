@@ -1,22 +1,102 @@
 (function($, _, ts) {
+  var TEXT_NODE = 3,
+    route,
+    poll;
+
   $('#civicrm-menu').ready(function() {
-    var tourMenu = $('.menu-item a[href$="#tutorial-start"]');
-    if (tourMenu.length) {
-      if (!CRM.vars || !CRM.vars.tutorial) {
-        tourMenu.hide();
+    var viewMenu = $('.menu-item a[href$="#tutorial-start"]').closest('li'),
+      editMenu = $('.menu-item a[href$="#tutorial-edit"]').closest('li'),
+      tutorials = CRM.vars && CRM.vars.tutorial ? CRM.vars.tutorial.items : null;
+    if (viewMenu.length) {
+      if (!tutorials) {
+        viewMenu.hide();
+        editMenu.hide();
       } else {
-        tourMenu.click(function(e) {
-          e.preventDefault();
-          startTour();
+        var i = 0;
+        _.each(tutorials, function(tutorial, id) {
+          var viewLink = viewMenu.find('a'),
+            editLink = editMenu.find('a');
+          if (i) {
+            viewLink = viewMenu.clone().insertAfter(viewMenu).hover(hoverMenu).find('a');
+            if (editMenu.length) {
+              editLink = editMenu.clone().insertAfter(editMenu).hover(hoverMenu).find('a');
+            }
+          }
+          viewLink
+            .attr('data-tutorial', id)
+            .click(clickStart)
+            .contents()
+            .filter(function() {
+              return this.nodeType === TEXT_NODE;
+            })
+            .replaceWith(tutorial.title);
+          editLink
+            .attr('data-tutorial', id)
+            .contents()
+            .filter(function() {
+              return this.nodeType === TEXT_NODE;
+            })
+            .replaceWith(ts('Edit') + ' "' + tutorial.title + '"');
+          ++i;
         });
-        if (!CRM.vars.tutorial.viewed) {
-          startTour();
-        }
+        $(window).on('hashchange', checkHash);
+        checkHash();
       }
     }
   });
 
-  function startTour() {
+  /**
+   * Mimic the clunky hover effect in the menu
+   */
+  function hoverMenu(e) {
+    $(this).toggleClass('active', e.type === 'mouseenter');
+  }
+
+  /**
+   * For dynamic pages using hash-based routing, show/hide tutorials when route changes
+   */
+  function checkHash() {
+    var hash = (window.location.hash || '').substr(1),
+      autoStartTutorial = null;
+    // Ignore query after route
+    if (hash && hash.indexOf('?') > -1) {
+      hash = hash.split('?')[0];
+    }
+    if (hash === route) {
+      return;
+    }
+    route = hash;
+    if (poll) {
+      clearInterval(poll);
+      poll = null;
+    }
+    _.each(CRM.vars.tutorial.items, function(tutorial, id) {
+      var match = (tutorial.url.split('#')[1] || '') === hash;
+      $('.menu-item a[data-tutorial="' + id + '"]').toggle(match);
+      if (match && tutorial.auto_start && !tutorial.viewed) {
+        autoStartTutorial = tutorial;
+      }
+    });
+    // Poll the dom at intervals to see if the element of the first step is present
+    if (autoStartTutorial) {
+      poll = setInterval(function() {
+        if ($(autoStartTutorial.steps[0].target).length) {
+          startTour(autoStartTutorial.id);
+          clearInterval(poll);
+          poll = null;
+        }
+      }, 500);
+    }
+  }
+
+  function clickStart(e) {
+    e.preventDefault();
+    startTour($(this).data('tutorial'));
+  }
+
+  function startTour(id) {
+    hopscotch.endTour();
+
     var defaults = {
       showPrevButton: true,
       i18n: {
@@ -25,7 +105,9 @@
       }
     };
     defaults.onClose = defaults.onEnd = endTour;
-    var tour = _.extend(defaults, _.cloneDeep(CRM.vars.tutorial));
+
+    CRM.vars.tutorial.items[id].viewed = true;
+    var tour = _.extend(defaults, _.cloneDeep(CRM.vars.tutorial.items[id]));
 
     // Place icons in the step number circle if provided
     tour.i18n.stepNums = _.map(tour.steps, function(step, i) {
@@ -33,6 +115,8 @@
     });
 
     hopscotch.startTour(tour);
+
+    CRM.api3('Tutorial', 'mark', {id: id});
   }
 
   function endTour() {

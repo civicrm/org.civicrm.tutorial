@@ -1,9 +1,8 @@
 (function($, _, ts) {
-  var tour,
+  var tutorial,
     oldIndex,
     currentStep = 0,
     ENTER_KEY = 13,
-    TEXT_NODE = 3,
     saved = true,
     templatesLoaded,
     templates = {
@@ -18,36 +17,25 @@
       icon: null
     };
 
-  $('#civicrm-menu').ready(function() {
-    var tourMenu = $('.menu-item a[href$="#tutorial-admin"]');
-    if (tourMenu.length) {
-      if (CRM.vars && CRM.vars.tutorial) {
-        tourMenu.contents()
-          .filter(function() {
-            return this.nodeType === TEXT_NODE;
-          })
-          .replaceWith(ts("Edit tour of this screen"));
-      }
-      tourMenu.click(function(e) {
-        e.preventDefault();
-        editTour();
-      });
-    }
+  $('body').on('click', '.menu-item a[href$="#tutorial-edit"], .menu-item a[href$="#tutorial-add"]', function(e) {
+    e.preventDefault();
+    editTour($(this).data('tutorial'));
   });
 
-  function setDefaults() {
-    if (!CRM.vars) CRM.vars = {};
-    if (!CRM.vars.tutorial) CRM.vars.tutorial = {};
+  $('body').on('click', '.menu-item a[href$="#tutorial-start"]', close);
+
+  function setDefaults(id) {
     currentStep = 0;
-    CRM.vars.tutorial = _.extend({
-      id: defaultId(),
+    tutorial = CRM.vars.tutorial.items && CRM.vars.tutorial.items[id] || {};
+    tutorial = _.extend({
+      title: ts('View Tutorial'),
       url: defaultUrl(),
+      viewed: true,
+      auto_start: false,
       steps: [],
       groups: []
-    }, CRM.vars.tutorial);
-    tour = CRM.vars.tutorial;
-    delete tour.viewed;
-    if (!tour.steps.length) {
+    }, tutorial);
+    if (!tutorial.steps.length) {
       addStep();
     }
   }
@@ -59,45 +47,59 @@
 
   function addStep() {
     var step = _.extend({}, stepDefaults);
-    tour.steps.push(step);
+    tutorial.steps.push(step);
     setSaved(false);
     return step;
   }
 
   function createStep() {
-    var num = tour.steps.length;
+    var num = tutorial.steps.length;
     var step = addStep();
     renderStep(step, num);
-    $('#civitutorial-steps').accordion('refresh').accordion('option', 'active', -1).find('h5').off('keydown');
+    refreshAccordions(-1);
   }
 
   function deleteStep() {
     var $step = $(this).closest('.civitutorial-step'),
       index = $step.index();
-    tour.steps.splice(index, 1);
+    tutorial.steps.splice(index, 1);
     $step.remove();
-    $('#civitutorial-steps').accordion('refresh').find('h5').off('keydown');
+    setSaved(false);
+    refreshAccordions();
   }
-
-  function defaultId() {
-    return _.kebabCase($('h1').first().text().toLowerCase());
+  
+  function refreshAccordions(activeIndex) {
+    $('#civitutorial-steps').accordion('refresh').find('h5').off('keydown');
+    if (typeof activeIndex === 'number') {
+      $('#civitutorial-steps').accordion('option', 'active', activeIndex);
+    }
   }
 
   function defaultUrl() {
-    var path = window.location.pathname,
-      query = window.location.search,
-      pos = path.indexOf('/civicrm/');
-    if (pos > -1) {
-      return path.slice(pos + 1);
+    var path = CRM.vars.tutorial.urlPath,
+      searchParams = new URLSearchParams(window.location.search),
+      hash = !window.location.hash || window.location.hash === '#' ? '' : window.location.hash,
+      queryWhitelist = ['action'],
+      query = '';
+    _.each(queryWhitelist, function(param) {
+      if (searchParams.get(param)) {
+        query += (query ? '&' : '?') + param + '=' + searchParams.get(param);
+      }
+    });
+    if (hash && hash.indexOf('?') > -1) {
+      hash = hash.split('?')[0];
     }
-    pos = query.indexOf('civicrm/');
-    return query.slice(pos).split('&')[0];
+    return path + query + hash;
   }
 
   function close() {
-    hopscotch.endTour();
     $('#civitutorial-admin, #civitutorial-overlay, #tutorial-admin-css').remove();
     $('body').removeClass('civitutorial-admin-open');
+  }
+
+  function cancel() {
+    hopscotch.endTour();
+    close();
     if (!saved) {
       hopscotch.startTour({
         id: 'admin-unsaved',
@@ -121,13 +123,16 @@
   function save(e) {
     e.preventDefault();
     setSaved(true);
-    CRM.api3('Tutorial', 'create', tour, true);
+    CRM.api3('Tutorial', 'create', tutorial, true)
+      .done(function(response) {
+        tutorial.id = response.id;
+      });
   }
 
   function openPreview() {
     hopscotch.endTour();
-    if (tour.steps[currentStep]) {
-      var step = _.cloneDeep(tour.steps[currentStep]);
+    if (tutorial.steps[currentStep]) {
+      var step = _.cloneDeep(tutorial.steps[currentStep]);
       step.title = step.title || ' ';
       step.content = step.content || ' ';
       if (step.target) {
@@ -162,11 +167,23 @@
     }
   }
 
+  function getSelectorClass($target) {
+    var result = '',
+      classString = _.trim($target.attr('class') || ''),
+      classes = classString ? classString.split(' ') : [];
+    classes = _.filter(classes, function(name) {
+      var prefix = name.substring(0, 3);
+      return prefix !== 'ng-' && prefix !== 'ui-';
+    });
+    return classes.length ? '.' + classes.join('.') : ''
+  }
+
   function pickBestTarget($target, child) {
-    var id, name, selector,
+    var id, selector,
       targetField = $('.civitutorial-step-content').eq(currentStep).find('[name=target]'),
       select2 = $target.closest('.select2-container'),
-      classes = _.trim($target.attr('class') || '');
+      classes = getSelectorClass($target),
+      name = $target.attr('name');
     child = child || '';
     if (select2.length) {
       pickBestTarget(select2.parent(), ' .select2-container');
@@ -174,10 +191,9 @@
       pickBestTarget($target.parent());
     } else if ($target.attr('id')) {
       targetField.val('#' + $target.attr('id') + child).change();
-    } else if (classes && !$target.is('span, strong, i, b, em, p, hr')) {
+    } else if ((name || classes) && !$target.is('span, strong, i, b, em, p, hr')) {
       id = $target.closest('[id]').attr('id');
-      name = $target.attr('name');
-      selector = (id ? '#' + id + ' ' : '') + (name ? '[name="' + name + '"]' : ' .' + classes.replace(/[ ]+/g, '.'));
+      selector = (id ? '#' + id + ' ' : '') + (name ? "[name='" + name + "']" : classes);
       if ($(selector).index($target) > 0) {
         selector += ':eq(' + $(selector).index($target) + ')';
       }
@@ -190,9 +206,6 @@
   function updateFieldVal($field, values) {
     var val,
       fieldName = $field.attr('name');
-    if ($field.is('#civitutorial-field-id')) {
-      $field.val(_.kebabCase($field.val()));
-    }
     if ($field.is(':checkbox')) {
       val = $field.is(':checked');
     } else if ($field.is('[contenteditable]')) {
@@ -222,15 +235,15 @@
   }
 
   function sortStop(e, ui) {
-    var item = tour.steps[oldIndex],
+    var item = tutorial.steps[oldIndex],
       newIndex = $(ui.item).index();
     if (newIndex !== oldIndex) {
-      tour.steps.splice(oldIndex, 1);
-      tour.steps.splice(newIndex, 0, item);
+      tutorial.steps.splice(oldIndex, 1);
+      tutorial.steps.splice(newIndex, 0, item);
     }
     currentStep = $('.civitutorial-step-title.ui-accordion-header-active', '#civitutorial-steps').closest('.civitutorial-step').index();
     updateIcon();
-    $('#civitutorial-steps').accordion('refresh').find('h5').off('keydown');
+    refreshAccordions();
   }
 
   function renderStep(step, num) {
@@ -243,7 +256,7 @@
     if (!templatesLoaded) {
       templatesLoaded = $.Deferred();
       $.each(templates, function(file) {
-        $.get(CRM.vars.tutorialAdmin.path + 'html/' + file + '.html')
+        $.get(CRM.vars.tutorial.basePath + 'html/' + file + '.html')
           .done(function (html) {
             templates[file] = _.template(html);
             if (_.min(templates) !== null) {
@@ -255,16 +268,18 @@
     return templatesLoaded;
   }
 
-  function editTour() {
-    $('body').append('<form id="civitutorial-admin" class="crm-container"></form><div id="civitutorial-overlay"></div>');
+  function editTour(id) {
+    saved = true;
+    close();
     hopscotch.endTour();
-    setDefaults();
+    $('body').append('<form id="civitutorial-admin" class="crm-container"></form><div id="civitutorial-overlay"></div>');
+    setDefaults(id);
     loadTemplates().done(function() {
       $('#civitutorial-admin')
-        .css('padding-top', '' + ($('#civicrm-menu').height() + 10) + 'px')
-        .html(templates.admin_main_tpl(tour))
+        .css('padding-top', '' + ($('#civicrm-menu').height() + 12) + 'px')
+        .html(templates.admin_main_tpl(tutorial))
         .submit(save);
-      $('#civitutorial-admin-close').click(close);
+      $('#civitutorial-admin-close').click(cancel);
       $('#civitutorial-add-step').click(createStep);
       $('#civitutorial-field-groups').crmEntityRef({
         entity: 'Group',
@@ -272,9 +287,9 @@
         select: {placeholder: ts('Groups'), multiple: true, allowClear: true, minimumInputLength: 0}
       });
       $('input[id^="civitutorial-field"]').change(function () {
-        updateFieldVal($(this), tour);
+        updateFieldVal($(this), tutorial);
       });
-      _.each(tour.steps, renderStep);
+      _.each(tutorial.steps, renderStep);
       $('#civitutorial-steps')
         .on('change input', ':input[name], [contenteditable]', function () {
           var name = $(this).attr('name'),
@@ -282,7 +297,7 @@
           if (index === currentStep && (name === 'title' || name === 'content')) {
             $('.hopscotch-bubble-container .hopscotch-' + name).html(name === 'title' ? $(this).html() : $(this).val());
           }
-          updateFieldVal($(this), tour.steps[index]);
+          updateFieldVal($(this), tutorial.steps[index]);
         })
         .on('change', '[name=icon]', updateIcon)
         .on('keydown', '[contenteditable]', function (e) {
@@ -318,7 +333,7 @@
     cssFile.onload = function() {
       $('body').addClass('civitutorial-admin-open');
     };
-    cssFile.href = CRM.vars.tutorialAdmin.path + 'css/tutorial-admin.css';
+    cssFile.href = CRM.vars.tutorial.basePath + 'css/tutorial-admin.css';
     $('body')[0].appendChild(cssFile);
     openPreview();
   }
