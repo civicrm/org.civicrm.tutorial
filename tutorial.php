@@ -159,15 +159,27 @@ function _civitutorial_get_files() {
     // Files in this directory override others, as this is where user-configured files go.
     $directories[] = Civi::paths()->getPath('[civicrm.files]/.');
     foreach ($directories as $directory) {
-      $dir = \CRM_Utils_File::addTrailingSlash($directory) . 'crm-tutorials';
+      $directory = \CRM_Utils_File::addTrailingSlash($directory);
+      $dir = $directory . 'crm-tutorials';
       if (is_dir($dir)) {
+        $domain = NULL;
+        $source = E::ts('Local');
+        // If this file is in an extension, read the name & domain from its info.xml file
+        if (is_readable($directory . 'info.xml')) {
+          $info = strstr(file_get_contents($directory . 'info.xml'), '<extension ');
+          if ($info) {
+            $domain = strstr(substr(strstr($info, 'key="'), 5), '"', TRUE);
+            $source = strstr(substr(strstr($info, '<name>'), 6), '<', TRUE);
+          }
+        }
         foreach (glob("$dir/*.js") as $file) {
           $matches = [];
           preg_match('/([-a-z_A-Z0-9]*).js/', $file, $matches);
           $id = $matches[1];
           $paths[$id] = $file;
-          $files[$id] = _civitutorial_decode(file_get_contents($file));
+          $files[$id] = _civitutorial_decode(file_get_contents($file), $domain);
           $files[$id]['id'] = $id;
+          $files[$id]['source'] = $source;
         }
       }
     }
@@ -191,14 +203,18 @@ function _civitutorial_encode($tutorial) {
 /**
  * Decodes json after localizing strings
  *
- * @param $json
- * @return mixed
+ * @param string $json
+ * @param string $domain
+ * @return array
  */
-function _civitutorial_decode($json) {
-  $json = preg_replace_callback('#: ts\("(.*)"\)#', function($matches) {
-    return ': "' . E::ts($matches[1]) . '"';
+function _civitutorial_decode($json, $domain = NULL) {
+  $json = preg_replace_callback('#: ts\((".*")\)#', function($matches) use ($domain) {
+    $text = json_decode($matches[1]);
+    $params = $domain ? ['domain' => $domain] : [];
+    return ': ' . json_encode(ts($text, $params), JSON_UNESCAPED_SLASHES);
   }, $json);
-  return json_decode($json, TRUE);
+  $result = json_decode($json, TRUE);
+  return $result + ['domain' => $domain];
 }
 
 /**
