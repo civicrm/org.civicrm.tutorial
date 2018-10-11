@@ -1,5 +1,5 @@
 <div id="civitutorial-admin-buttons">
-  <button id="civitutorial-admin-save" disabled="disabled"><i class="crm-i fa-check"></i></button>
+  <button id="civitutorial-admin-save" <% if (saved) { %> disabled="disabled" <% } %>><i class="crm-i fa-check"></i></button>
   <button type="button" id="civitutorial-admin-close"><i class="crm-i fa-close"></i></button>
 </div>
 <h4><%- ts('Edit Tutorial') %></h4>

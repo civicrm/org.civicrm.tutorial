@@ -19,12 +19,13 @@
       icon: null
     };
 
-  $('body').on('click', '.menu-item a[href$="#tutorial-edit"], .menu-item a[href$="#tutorial-add"]', function(e) {
-    e.preventDefault();
-    editTour($(this).data('tutorial'));
-  });
+  $('body')
+    .on('click', '.menu-item a[href$="#tutorial-start"]', close)
+    .on('click', '.menu-item a[href$="#tutorial-edit"], .menu-item a[href$="#tutorial-add"]', function(e) {
+      e.preventDefault();
+      editTour($(this).data('tutorial'));
+    });
 
-  $('body').on('click', '.menu-item a[href$="#tutorial-start"]', close);
 
   function setDefaults(id) {
     currentStep = 0;
@@ -119,7 +120,7 @@
             placement: 'bottom',
             nextOnTargetClick: true,
             title: ts('Unsaved Changes.'),
-            content: ts('Your tutorial has not been saved. You can get back into editing it from this menu; if you leave or refresh this page your changes will be lost.')
+            content: ts('Your tutorial has not been saved. You can get back to editing it from this menu; if you leave or refresh this page your changes will be lost.')
           }
         ],
         i18n: {
