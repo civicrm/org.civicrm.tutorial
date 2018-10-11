@@ -38,8 +38,8 @@ body.civitutorial-admin-open .hopscotch-nav-button {
   color: white;
   cursor: pointer;
 }
-button#civitutorial-admin-close {
-  background: #aaa334;
+form:not(.tutorial-saved) #civitutorial-admin-close {
+  background: #d2c600;
 }
 button#civitutorial-admin-delete {
   background: #aa323b;

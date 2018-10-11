@@ -85,7 +85,7 @@
     if (autoStartTutorial) {
       poll = setInterval(function() {
         if ($(autoStartTutorial.steps[0].target).length) {
-          startTour(autoStartTutorial.id);
+          startTutorial(autoStartTutorial.id);
           clearInterval(poll);
           poll = null;
         }
@@ -95,10 +95,10 @@
 
   function clickStart(e) {
     e.preventDefault();
-    startTour($(this).data('tutorial'));
+    startTutorial($(this).data('tutorial'));
   }
 
-  function startTour(id) {
+  function startTutorial(id) {
     hopscotch.endTour();
 
     var defaults = {
@@ -108,33 +108,33 @@
         prevBtn: ts('Back')
       }
     };
-    defaults.onClose = defaults.onEnd = endTour;
+    defaults.onClose = defaults.onEnd = endTutorial;
 
     CRM.vars.tutorial.items[id].viewed = true;
-    var tour = _.extend(defaults, _.cloneDeep(CRM.vars.tutorial.items[id]));
+    var tutorial = _.extend(defaults, _.cloneDeep(CRM.vars.tutorial.items[id]));
 
     // Place icons in the step number circle if provided
-    tour.i18n.stepNums = _.map(tour.steps, function(step, i) {
+    tutorial.i18n.stepNums = _.map(tutorial.steps, function(step, i) {
       return step.icon ? '<i class="crm-i ' + step.icon + '"></i>' : i + 1;
     });
 
-    hopscotch.startTour(tour);
+    hopscotch.startTour(tutorial);
 
     CRM.api3('Tutorial', 'mark', {id: id});
   }
 
-  function endTour() {
+  function endTutorial() {
     var supportMenu = $('.menumain a[href$="#tutorial-start"]').closest('.menumain');
     if (supportMenu.length) {
       window.setTimeout(function() {
         hopscotch.startTour({
-          id: 'tour-closed',
+          id: 'tutorial-closed',
           steps: [
             {
               target: $(supportMenu)[0],
               placement: 'bottom',
               nextOnTargetClick: true,
-              content: ts('To see this tour again, or for more ways to learn and get help, open the Support menu.')
+              content: ts('To see this tutorial again, or for more ways to learn and get help, open the Support menu.')
             }
           ],
           i18n: {

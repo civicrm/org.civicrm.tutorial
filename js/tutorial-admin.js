@@ -52,11 +52,13 @@
     if (!tutorial.steps.length) {
       addStep();
     }
+    setSaved(tutorial.saved);
   }
 
   function setSaved(val) {
     tutorial.saved = val;
     $('#civitutorial-admin-save').prop('disabled', val);
+    $('#civitutorial-admin').toggleClass('tutorial-saved', val);
   }
 
   function addStep() {

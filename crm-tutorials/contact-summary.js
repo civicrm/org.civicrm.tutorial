@@ -1,6 +1,7 @@
 {
     "url": "civicrm/contact/view",
     "title": ts("Introduction to Contacts"),
+    "auto_run": true,
     "steps": [
         {
             "target": "#contactname-block",
