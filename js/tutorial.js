@@ -4,14 +4,14 @@
     poll;
 
   CRM.vars.tutorial.insertIntoMenu = function(tutorial, id) {
-    var viewMenu = $('.menu-item a[href$="#tutorial-start"]').first().closest('li'),
-      editMenu = $('.menu-item a[href$="#tutorial-edit"]').first().closest('li'),
-      viewLink = viewMenu.find('a'),
-      editLink = editMenu.find('a');
+    var viewMenu = $('.menu-item a[href$="#tutorial-start"]').closest('li'),
+      editMenu = $('.menu-item a[href$="#tutorial-edit"]').closest('li'),
+      viewLink = viewMenu.first().find('a'),
+      editLink = editMenu.first().find('a');
     if (viewLink.attr('data-tutorial')) {
-      viewLink = viewMenu.clone().insertAfter($('.menu-item a[href$="#tutorial-start"]').last().closest('li')).hover(hoverMenu).find('a');
+      viewLink = viewMenu.first().clone().insertAfter(viewMenu.last()).hover(hoverMenu).find('a');
       if (editMenu.length) {
-        editLink = editMenu.clone().insertAfter($('.menu-item a[href$="#tutorial-edit"]').last().closest('li')).hover(hoverMenu).find('a');
+        editLink = editMenu.first().clone().insertAfter(editMenu.last()).hover(hoverMenu).find('a');
       }
     }
     viewLink

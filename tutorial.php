@@ -163,7 +163,7 @@ function _civitutorial_get_files() {
       $dir = $directory . 'crm-tutorials';
       if (is_dir($dir)) {
         $domain = NULL;
-        $source = E::ts('Local');
+        $source = NULL;
         // If this file is in an extension, read the name & domain from its info.xml file
         if (is_readable($directory . 'info.xml')) {
           $info = strstr(file_get_contents($directory . 'info.xml'), '<extension ');
@@ -177,6 +177,10 @@ function _civitutorial_get_files() {
           preg_match('/([-a-z_A-Z0-9]*).js/', $file, $matches);
           $id = $matches[1];
           $paths[$id] = $file;
+          // Retain original source when overriding file
+          if (!$source && !empty($files[$id]['source'])) {
+            $source = $files[$id]['source'];
+          }
           $files[$id] = _civitutorial_decode(file_get_contents($file), $domain);
           $files[$id]['id'] = $id;
           $files[$id]['source'] = $source;

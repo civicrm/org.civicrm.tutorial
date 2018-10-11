@@ -58,7 +58,18 @@ function civicrm_api3_tutorial_create($params) {
 function civicrm_api3_tutorial_delete($params) {
   $filePath = Civi::paths()->getPath('[civicrm.files]/crm-tutorials/' . $params['id'] . '.js');
   unlink($filePath);
+  Civi::cache('community_messages')->delete('tutorials');
   return civicrm_api3_create_success();
+}
+
+
+/**
+ * Adjust metadata for delete action.
+ *
+ * @param $spec
+ */
+function _civicrm_api3_tutorial_delete_spec(&$spec) {
+  $spec['id']['type'] = CRM_Utils_TYPE::T_STRING;
 }
 
 /**

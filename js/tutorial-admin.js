@@ -31,12 +31,15 @@
     currentStep = 0;
     tutorial = CRM.vars.tutorial.items && CRM.vars.tutorial.items[id] || newTutorial;
     var defaults = {
+      id: null,
       title: ts('Learn about this screen'),
       viewed: true,
       saved: true,
       auto_start: false,
       steps: [],
-      groups: []
+      groups: [],
+      domain: null,
+      source: null
     };
     _.each(defaults, function(val, key) {
       if (typeof tutorial[key] === 'undefined') {
@@ -59,13 +62,13 @@
   function addStep() {
     var step = _.extend({}, stepDefaults);
     tutorial.steps.push(step);
-    setSaved(false);
     return step;
   }
 
   function createStep() {
     var num = tutorial.steps.length;
     var step = addStep();
+    setSaved(false);
     renderStep(step, num);
     refreshAccordions(-1);
   }
@@ -138,6 +141,8 @@
   }
 
   function postSave(saved) {
+    $('#civitutorial-admin-delete').prop('disabled', false);
+    tutorial.domain = null;
     if (!tutorial.id && saved.id) {
       var id = tutorial.id = saved.id;
       newTutorial = {};
@@ -145,6 +150,30 @@
       CRM.vars.tutorial.items[id] = tutorial;
       CRM.vars.tutorial.insertIntoMenu(tutorial, id);
     }
+  }
+
+  function deleteTutorial() {
+    CRM.confirm({
+      title: tutorial.source ? ts('Revert Tutorial') : ts('Delete Tutorial'),
+      message: tutorial.source?
+        ts('Local changes to this tutorial will be deleted and the original copy from %1 will be restored.', {'1': tutorial.source}) :
+        ts('This tutorial will be completely removed. This action cannot be undone.')
+    }).on('crmConfirm:yes', function() {
+      close();
+      hopscotch.endTour();
+      var params = {id: tutorial.id};
+      if (tutorial.source) {
+        CRM.api3([['Tutorial', 'delete', params], ['Tutorial', 'get', params]], true).done(function(result) {
+          newTutorial = {};
+          CRM.vars.tutorial.items[params.id] = result[1].values[params.id];
+          CRM.vars.tutorial.items[params.id].viewed = true;
+        });
+      } else {
+        delete CRM.vars.tutorial.items[params.id];
+        $('.menu-item a[data-tutorial="' + params.id + '"]').removeAttr('data-tutorial').closest('li').hide();
+        CRM.api3('Tutorial', 'delete', params, true);
+      }
+    });
   }
 
   function openPreview() {
@@ -303,6 +332,7 @@
         .html(templates.admin_main_tpl(tutorial))
         .submit(save);
       $('#civitutorial-admin-close').click(cancel);
+      $('#civitutorial-admin-delete').click(deleteTutorial);
       $('#civitutorial-add-step').click(createStep);
       $('#civitutorial-field-groups').crmEntityRef({
         entity: 'Group',

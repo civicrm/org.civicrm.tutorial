@@ -38,13 +38,15 @@ body.civitutorial-admin-open .hopscotch-nav-button {
   color: white;
   cursor: pointer;
 }
+button#civitutorial-admin-close {
+  background: #aaa334;
+}
+button#civitutorial-admin-delete {
+  background: #aa323b;
+}
 #civitutorial-admin button[disabled] {
   cursor: default;
   background: #787d75;
-}
-
-#civitutorial-admin #civitutorial-admin-close {
-  background: #aa323b;
 }
 #civitutorial-admin-buttons {
   float: right;
