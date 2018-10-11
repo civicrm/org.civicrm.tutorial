@@ -3,42 +3,46 @@
     route,
     poll;
 
+  CRM.vars.tutorial.insertIntoMenu = function(tutorial, id) {
+    var viewMenu = $('.menu-item a[href$="#tutorial-start"]').first().closest('li'),
+      editMenu = $('.menu-item a[href$="#tutorial-edit"]').first().closest('li'),
+      viewLink = viewMenu.find('a'),
+      editLink = editMenu.find('a');
+    if (viewLink.attr('data-tutorial')) {
+      viewLink = viewMenu.clone().insertAfter($('.menu-item a[href$="#tutorial-start"]').last().closest('li')).hover(hoverMenu).find('a');
+      if (editMenu.length) {
+        editLink = editMenu.clone().insertAfter($('.menu-item a[href$="#tutorial-edit"]').last().closest('li')).hover(hoverMenu).find('a');
+      }
+    }
+    viewLink
+      .attr('data-tutorial', id)
+      .click(clickStart)
+      .contents()
+      .filter(function() {
+        return this.nodeType === TEXT_NODE;
+      })
+      .replaceWith(tutorial.title);
+    editLink
+      .attr('data-tutorial', id)
+      .contents()
+      .filter(function() {
+        return this.nodeType === TEXT_NODE;
+      })
+      .replaceWith(ts('Edit') + ' "' + tutorial.title + '"');
+    viewLink.closest('li').show();
+    editLink.closest('li').show();
+  };
+
   $('#civicrm-menu').ready(function() {
     var viewMenu = $('.menu-item a[href$="#tutorial-start"]').closest('li'),
       editMenu = $('.menu-item a[href$="#tutorial-edit"]').closest('li'),
-      tutorials = CRM.vars && CRM.vars.tutorial ? CRM.vars.tutorial.items : null;
+      tutorials = CRM.vars && CRM.vars.tutorial && CRM.vars.tutorial.items;
     if (viewMenu.length) {
       if (!tutorials) {
         viewMenu.hide();
         editMenu.hide();
       } else {
-        var i = 0;
-        _.each(tutorials, function(tutorial, id) {
-          var viewLink = viewMenu.find('a'),
-            editLink = editMenu.find('a');
-          if (i) {
-            viewLink = viewMenu.clone().insertAfter(viewMenu).hover(hoverMenu).find('a');
-            if (editMenu.length) {
-              editLink = editMenu.clone().insertAfter(editMenu).hover(hoverMenu).find('a');
-            }
-          }
-          viewLink
-            .attr('data-tutorial', id)
-            .click(clickStart)
-            .contents()
-            .filter(function() {
-              return this.nodeType === TEXT_NODE;
-            })
-            .replaceWith(tutorial.title);
-          editLink
-            .attr('data-tutorial', id)
-            .contents()
-            .filter(function() {
-              return this.nodeType === TEXT_NODE;
-            })
-            .replaceWith(ts('Edit') + ' "' + tutorial.title + '"');
-          ++i;
-        });
+        _.each(tutorials, CRM.vars.tutorial.insertIntoMenu);
         $(window).on('hashchange', checkHash);
         checkHash();
       }
@@ -72,7 +76,7 @@
     }
     _.each(CRM.vars.tutorial.items, function(tutorial, id) {
       var match = (tutorial.url.split('#')[1] || '') === hash;
-      $('.menu-item a[data-tutorial="' + id + '"]').toggle(match);
+      $('.menu-item a[data-tutorial="' + id + '"]').closest('li').toggle(match);
       if (match && tutorial.auto_start && !tutorial.viewed) {
         autoStartTutorial = tutorial;
       }

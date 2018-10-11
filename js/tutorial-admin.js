@@ -4,7 +4,9 @@
     currentStep = 0,
     ENTER_KEY = 13,
     saved = true,
+    newTutorial = {},
     templatesLoaded,
+    resourceSuffix,
     templates = {
       admin_main_tpl: null,
       admin_step_tpl: null
@@ -26,23 +28,31 @@
 
   function setDefaults(id) {
     currentStep = 0;
-    tutorial = CRM.vars.tutorial.items && CRM.vars.tutorial.items[id] || {};
-    tutorial = _.extend({
-      title: ts('View Tutorial'),
-      url: defaultUrl(),
+    tutorial = CRM.vars.tutorial.items && CRM.vars.tutorial.items[id] || newTutorial;
+    var defaults = {
+      title: ts('Learn about this screen'),
       viewed: true,
+      saved: true,
       auto_start: false,
       steps: [],
       groups: []
-    }, tutorial);
+    };
+    _.each(defaults, function(val, key) {
+      if (typeof tutorial[key] === 'undefined') {
+        tutorial[key] = val;
+      }
+    });
+    if (!tutorial.id) {
+      tutorial.url = defaultUrl();
+    }
     if (!tutorial.steps.length) {
       addStep();
     }
   }
 
   function setSaved(val) {
-    saved = val;
-    $('#civitutorial-admin-save').prop('disabled', saved);
+    tutorial.saved = val;
+    $('#civitutorial-admin-save').prop('disabled', val);
   }
 
   function addStep() {
@@ -100,7 +110,7 @@
   function cancel() {
     hopscotch.endTour();
     close();
-    if (!saved) {
+    if (!tutorial.saved) {
       hopscotch.startTour({
         id: 'admin-unsaved',
         steps: [
@@ -123,10 +133,17 @@
   function save(e) {
     e.preventDefault();
     setSaved(true);
-    CRM.api3('Tutorial', 'create', tutorial, true)
-      .done(function(response) {
-        tutorial.id = response.id;
-      });
+    CRM.api3('Tutorial', 'create', tutorial, true).done(postSave);
+  }
+
+  function postSave(saved) {
+    if (!tutorial.id && saved.id) {
+      var id = tutorial.id = saved.id;
+      newTutorial = {};
+      CRM.vars.tutorial.items = CRM.vars.tutorial.items || {};
+      CRM.vars.tutorial.items[id] = tutorial;
+      CRM.vars.tutorial.insertIntoMenu(tutorial, id);
+    }
   }
 
   function openPreview() {
@@ -175,7 +192,7 @@
       var prefix = name.substring(0, 3);
       return prefix !== 'ng-' && prefix !== 'ui-';
     });
-    return classes.length ? '.' + classes.join('.') : ''
+    return classes.length ? '.' + classes.join('.') : '';
   }
 
   function pickBestTarget($target, child) {
@@ -256,7 +273,7 @@
     if (!templatesLoaded) {
       templatesLoaded = $.Deferred();
       $.each(templates, function(file) {
-        $.get(CRM.vars.tutorial.basePath + 'html/' + file + '.html')
+        $.get(CRM.vars.tutorial.basePath + 'html/' + file + '.html?' + resourceSuffix)
           .done(function (html) {
             templates[file] = _.template(html);
             if (_.min(templates) !== null) {
@@ -268,12 +285,17 @@
     return templatesLoaded;
   }
 
+  function setResourceSuffix() {
+    var src = (CRM.$('script[src*="civicrm/ajax/l10n-js"]').attr('src') || '').match(/r=\w{5}/);
+    resourceSuffix = (src && src[0]) || ('r=' + Math.random().toString(36).substring(2, 7));
+  }
+
   function editTour(id) {
-    saved = true;
     close();
     hopscotch.endTour();
     $('body').append('<form id="civitutorial-admin" class="crm-container"></form><div id="civitutorial-overlay"></div>');
     setDefaults(id);
+    setResourceSuffix();
     loadTemplates().done(function() {
       $('#civitutorial-admin')
         .css('padding-top', '' + ($('#civicrm-menu').height() + 12) + 'px')
@@ -333,7 +355,7 @@
     cssFile.onload = function() {
       $('body').addClass('civitutorial-admin-open');
     };
-    cssFile.href = CRM.vars.tutorial.basePath + 'css/tutorial-admin.css';
+    cssFile.href = CRM.vars.tutorial.basePath + 'css/tutorial-admin.css?' + resourceSuffix;
     $('body')[0].appendChild(cssFile);
     openPreview();
   }
