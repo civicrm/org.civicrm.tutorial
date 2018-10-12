@@ -297,7 +297,7 @@
 
   function renderStep(step, num) {
     $('#civitutorial-steps')
-      .append(templates.admin_step_tpl(_.extend({num: num+1}, stepDefaults, step)))
+      .append(templates.admin_step_tpl(_.extend({num: num+1, ts: ts}, stepDefaults, step)))
       .find('.crm-icon-picker').not('.iconpicker-widget').crmIconPicker();
   }
 
@@ -331,7 +331,7 @@
     loadTemplates().done(function() {
       $('#civitutorial-admin')
         .css('padding-top', '' + ($('#civicrm-menu').height() + 12) + 'px')
-        .html(templates.admin_main_tpl(tutorial))
+        .html(templates.admin_main_tpl(_.extend({ts: ts}, tutorial)))
         .submit(save);
       $('#civitutorial-admin-close').click(cancel);
       $('#civitutorial-admin-delete').click(deleteTutorial);
