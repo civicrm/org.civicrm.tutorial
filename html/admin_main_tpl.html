@@ -3,7 +3,7 @@
   <button type="button" id="civitutorial-admin-delete" <% if (domain || !id) { %> disabled="disabled" <% } %>><i class="crm-i fa-trash"></i></button>
   <button type="button" id="civitutorial-admin-close"><i class="crm-i fa-close"></i></button>
 </div>
-<h4><%- ts('Edit Tutorial') %></h4>
+<h4><%- source ? ts('Tutorial From %1', {1: source}) : ts('Custom Tutorial') %></h4>
 <div id="civitutorial-admin-top">
   <div>
     <label for="civitutorial-field-title"><%- ts('Title') %> <span class="crm-marker">*</span></label>

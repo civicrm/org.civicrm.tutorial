@@ -146,12 +146,12 @@
     $('#civitutorial-admin-delete').prop('disabled', false);
     tutorial.domain = null;
     if (!tutorial.id && saved.id) {
-      var id = tutorial.id = saved.id;
+      tutorial.id = saved.id;
       newTutorial = {};
       CRM.vars.tutorial.items = CRM.vars.tutorial.items || {};
-      CRM.vars.tutorial.items[id] = tutorial;
-      CRM.vars.tutorial.insertIntoMenu(tutorial, id);
+      CRM.vars.tutorial.items[saved.id] = tutorial;
     }
+    CRM.vars.tutorial.insertIntoMenu(tutorial, saved.id);
   }
 
   function deleteTutorial() {
@@ -172,7 +172,7 @@
         });
       } else {
         delete CRM.vars.tutorial.items[params.id];
-        $('.menu-item a[data-tutorial="' + params.id + '"]').removeAttr('data-tutorial').closest('li').hide();
+        $('.menu-item a[data-tutorial="' + params.id + '"]').removeAttr('data-tutorial').off('click').closest('li').hide();
         CRM.api3('Tutorial', 'delete', params, true);
       }
     });

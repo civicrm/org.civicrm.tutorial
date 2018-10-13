@@ -8,7 +8,10 @@
       editMenu = $('.menu-item a[href$="#tutorial-edit"]').closest('li'),
       viewLink = viewMenu.first().find('a'),
       editLink = editMenu.first().find('a');
-    if (viewLink.attr('data-tutorial')) {
+    if (viewMenu.find('a[data-tutorial="' + id + '"]').length) {
+      viewLink = viewMenu.find('a[data-tutorial="' + id + '"]');
+      editLink = editMenu.find('a[data-tutorial="' + id + '"]');
+    } else if (viewLink.attr('data-tutorial')) {
       viewLink = viewMenu.first().clone().insertAfter(viewMenu.last()).hover(hoverMenu).find('a');
       if (editMenu.length) {
         editLink = editMenu.first().clone().insertAfter(editMenu.last()).hover(hoverMenu).find('a');
@@ -16,6 +19,7 @@
     }
     viewLink
       .attr('data-tutorial', id)
+      .off('click')
       .click(clickStart)
       .contents()
       .filter(function() {
@@ -99,11 +103,14 @@
   }
 
   function startTutorial(id) {
-    hopscotch.endTour();
+    hopscotch.endTour()
+     .resetDefaultI18N()
+     .resetDefaultOptions();
 
     var defaults = {
       showPrevButton: true,
       i18n: {
+        nextBtn: ts('Next'),
         doneBtn: ts('Done'),
         prevBtn: ts('Back')
       }
