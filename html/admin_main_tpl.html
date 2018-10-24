@@ -21,8 +21,9 @@
     <div class="description"><%- ts('Users who will see this tutorial.') %></div>
   </div>
   <div>
-    <label for="civitutorial-field-auto_start"><%- ts('Auto-run for first-time users') %></label>
+    <label for="civitutorial-field-auto_start"><%- ts('Auto-run') %></label>
     <input id="civitutorial-field-auto_start" type="checkbox" name="auto_start" <% if (auto_start) { %> checked="checked" <% } %>  />
+    <div class="description"><%- ts('Launch tutorial the first time a user visits this page.') %></div>
   </div>
 </div>
 <div id="civitutorial-steps"></div>
