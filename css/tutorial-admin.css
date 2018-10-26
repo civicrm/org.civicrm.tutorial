@@ -81,11 +81,11 @@ button#civitutorial-admin-delete {
 
 #civitutorial-admin-top label {
   display: inline-block;
-  min-width: 45px;
+  min-width: 50px;
 }
 
 #civitutorial-admin-top .description {
-  margin-left: 50px;
+  margin-left: 53px;
 }
 
 #civitutorial-admin .ui-widget-content,
