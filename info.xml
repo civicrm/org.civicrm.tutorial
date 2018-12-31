@@ -18,8 +18,11 @@
   <version>1.0</version>
   <develStage>stable</develStage>
   <compatibility>
-    <ver>4.7</ver>
+    <ver>5.8</ver>
   </compatibility>
+  <requires>
+    <ext>uk.squiffle.kam</ext>
+  </requires>
   <comments>Support this extension by donating to CiviCRM!</comments>
   <civix>
     <namespace>CRM/Tutorial</namespace>
