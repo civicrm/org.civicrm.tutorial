@@ -21,11 +21,12 @@
 
   $(document).on('crmLoad', '#civicrm-menu', function() {
     supportMenuName = CRM.menubar.getItem('Support') ? 'Support' : (CRM.menubar.getItem('Help') ? 'Help' : 'Home');
-    $('#civicrm-menu').on('click', 'a[href="#tutorial-view"]', close);
-    $('#civicrm-menu').on('click', 'a[href="#tutorial-edit"],a[href="#tutorial-add"]', function(e) {
-      e.preventDefault();
-      editTour($(this).parent().data('name').split(':')[1]);
-    });
+    $('#civicrm-menu')
+      .on('click', 'a[href="#tutorial-view"]', close)
+      .on('click', 'a[href="#tutorial-edit"],a[href="#tutorial-add"]', function(e) {
+        e.preventDefault();
+        editTour($(this).parent().data('name').split(':')[1]);
+      });
     CRM.menubar.addItems(-1, supportMenuName, [{
       label: ts('Create new tutorial'),
       name: 'tutorial_add',
@@ -129,7 +130,7 @@
         id: 'admin-unsaved',
         steps: [
           {
-            target: $('.menumain a[href$="#tutorial-start"]').closest('.menumain')[0],
+            target: '#civicrm-menu li[data-name="' + supportMenuName + '"]',
             placement: 'bottom',
             nextOnTargetClick: true,
             title: ts('Unsaved Changes.'),
@@ -137,7 +138,7 @@
           }
         ],
         i18n: {
-          doneBtn: ts('Close'),
+          doneBtn: ts('Ok'),
           stepNums: ['<i class="crm-i fa-info"></i>']
         }
       });
@@ -175,11 +176,11 @@
     } else if (saved.id) {
       CRM.menubar.updateItem({
         label: tutorial.title,
-        name: 'tutorial_view:' + saved.id,
+        name: 'tutorial_view:' + saved.id
       });
       CRM.menubar.updateItem({
         label: ts('Edit %1', {1: tutorial.title}),
-        name: 'tutorial_edit:' + saved.id,
+        name: 'tutorial_edit:' + saved.id
       });
     }
   }
@@ -349,7 +350,7 @@
         var request = $.Deferred();
         requests.push(request);
         $.get(CRM.vars.tutorial.basePath + 'html/' + file + '.html?' + CRM.config.resourceCacheCode)
-          .done(function (html) {
+          .done(function(html) {
             templates[file] = _.template(html, {imports: {ts: ts}});
             request.resolve();
           });
@@ -378,12 +379,12 @@
         api: {id_field: 'name', params: {is_hidden: 0, is_active: 1}},
         select: {placeholder: ts('Groups'), multiple: true, allowClear: true, minimumInputLength: 0}
       });
-      $('input[id^="civitutorial-field"]').change(function () {
+      $('input[id^="civitutorial-field"]').change(function() {
         updateFieldVal($(this), tutorial);
       });
       _.each(tutorial.steps, renderStep);
       $('#civitutorial-steps')
-        .on('change input', ':input[name], [contenteditable]', function () {
+        .on('change input', ':input[name], [contenteditable]', function() {
           var name = $(this).attr('name'),
             index = $(this).closest('.civitutorial-step').index();
           if (index === currentStep && (name === 'title' || name === 'content')) {
@@ -392,7 +393,7 @@
           updateFieldVal($(this), tutorial.steps[index]);
         })
         .on('change', '[name=icon]', updateIcon)
-        .on('keydown', '[contenteditable]', function (e) {
+        .on('keydown', '[contenteditable]', function(e) {
           if (e.which === ENTER_KEY) {
             e.preventDefault();
             $(this).blur();
@@ -401,7 +402,7 @@
         .on('click focus', '[name=target]', selectTarget)
         .on('keydown', '[name=target]', doneSelecting)
         .on('click', '.civitutorial-step-remove', deleteStep)
-        .on('accordionbeforeactivate', function (e, ui) {
+        .on('accordionbeforeactivate', function(e, ui) {
           currentStep = $(ui.newHeader).closest('.civitutorial-step').index();
           openPreview();
         })
