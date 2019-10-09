@@ -12,7 +12,7 @@ Create and display walkthrough tutorials for CiviCRM screens.
 
 ## Usage
 
-Once installed, visit the contact summary screen to view the default tutorial. It will be displayed to each user once.
+Once installed, visit the contact summary screen to view the default tutorial. Select *Support* from the top menu bar, then *Introduction to Contacts*. It will be displayed to each user once. 
 
 If you are an administrator, this extension will let you edit the default tutorial on the contact summary screen, or create new tutorials for other screens. Visit the *Support* menu to get started.
 
