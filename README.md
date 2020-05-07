@@ -4,6 +4,9 @@ Create and display walkthrough tutorials for CiviCRM screens.
 
 ![Screenshot](/images/view-tour.gif)
 
+View the latest version of this extension on CiviCRM's Gitlab:  
+https://lab.civicrm.org/extensions/tutorial
+
 ## Requirements
 
 * CiviCRM 5.12 or (preferably) later
